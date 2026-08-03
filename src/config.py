@@ -44,8 +44,8 @@ IMAGE_STYLE = (
 )
 
 # ── Gemini models ──────────────────────────────────────────────────
-GEMINI_TEXT_MODEL = "gemini-2.5-flash"
-GEMINI_IMAGE_MODEL = "gemini-2.5-flash-image"
+GEMINI_TEXT_MODEL = "gemini-3.5-flash"
+GEMINI_IMAGE_MODEL = "gemini-3.1-flash-image"
 
 # ── Telegram ───────────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
