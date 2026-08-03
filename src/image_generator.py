@@ -128,8 +128,10 @@ def generate_all_images(image_prompts: list[dict]) -> list[Path]:
         generate_single_image(prompt_data["image_prompt"], output_path)
         image_paths.append(output_path)
 
-        # Rate limit: small delay between requests
-        time.sleep(1.5)
+        # Rate limit: free tier allows ~2 images/min, so wait 35s between requests
+        if i < total - 1:
+            print(f"    ⏳ Waiting 35s (free tier rate limit)...")
+            time.sleep(35)
 
     print(f"🖼️  Generated {len(image_paths)} images total")
     return image_paths

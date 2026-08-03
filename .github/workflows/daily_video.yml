@@ -9,7 +9,7 @@ on:
 jobs:
   create-video:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 120
 
     permissions:
       contents: write

@@ -36,7 +36,7 @@ def generate_text(prompt: str, max_retries: int = 3) -> str:
                 if "503" in err_str or "429" in err_str:
                     print(f"    ⚠️  {model} unavailable (attempt {attempt + 1}), ", end="")
                     if attempt < max_retries - 1:
-                        wait = 5 * (attempt + 1)
+                        wait = 15 * (attempt + 1)
                         print(f"retrying in {wait}s...")
                         time.sleep(wait)
                     else:
@@ -77,7 +77,7 @@ def generate_image(prompt: str, max_retries: int = 3):
                 if "503" in err_str or "429" in err_str:
                     print(f"    ⚠️  {model} unavailable (attempt {attempt + 1}), ", end="")
                     if attempt < max_retries - 1:
-                        wait = 5 * (attempt + 1)
+                        wait = 15 * (attempt + 1)
                         print(f"retrying in {wait}s...")
                         time.sleep(wait)
                     else:
