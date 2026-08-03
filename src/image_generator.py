@@ -4,12 +4,10 @@ import base64
 import time
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-from google import genai
-from google.genai import types
 from src.config import (
-    GEMINI_API_KEY, GEMINI_IMAGE_MODEL, IMAGE_STYLE,
-    VIDEO_WIDTH, VIDEO_HEIGHT, OUTPUT_DIR
+    IMAGE_STYLE, VIDEO_WIDTH, VIDEO_HEIGHT, OUTPUT_DIR
 )
+from src.gemini_helper import generate_image
 
 
 class ImageGenerationFailed(Exception):
@@ -20,13 +18,8 @@ class ImageGenerationFailed(Exception):
     pass
 
 
-def _get_client():
-    return genai.Client(api_key=GEMINI_API_KEY)
-
-
 def generate_single_image(prompt: str, output_path: Path, max_retries: int = 5) -> Path:
     """Generate one image. Retries with modified prompts on failure."""
-    client = _get_client()
 
     for attempt in range(max_retries):
         try:
@@ -39,13 +32,7 @@ def generate_single_image(prompt: str, output_path: Path, max_retries: int = 5) 
                 # Very simplified fallback prompt
                 full_prompt = f"Simple colorful cartoon drawing of a person in a scene. Flat illustration style, white background."
 
-            response = client.models.generate_content(
-                model=GEMINI_IMAGE_MODEL,
-                contents=full_prompt,
-                config=types.GenerateContentConfig(
-                    response_modalities=["IMAGE", "TEXT"]
-                )
-            )
+            response = generate_image(full_prompt)
 
             # Extract image from response
             for part in response.candidates[0].content.parts:
@@ -151,7 +138,6 @@ def generate_all_images(image_prompts: list[dict]) -> list[Path]:
 def generate_thumbnail(script: dict) -> Path:
     """Generate a YouTube thumbnail — cartoon style with title overlay."""
     thumb_path = OUTPUT_DIR / "thumbnail.png"
-    client = _get_client()
 
     title = script["title"]
     prompt = (
@@ -163,13 +149,7 @@ def generate_thumbnail(script: dict) -> Path:
     )
 
     try:
-        response = client.models.generate_content(
-            model=GEMINI_IMAGE_MODEL,
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                response_modalities=["IMAGE", "TEXT"]
-            )
-        )
+        response = generate_image(prompt)
 
         for part in response.candidates[0].content.parts:
             if part.inline_data and part.inline_data.mime_type.startswith("image/"):

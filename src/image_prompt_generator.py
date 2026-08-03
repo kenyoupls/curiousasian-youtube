@@ -5,12 +5,8 @@ based on the story beats, topic shifts, and visual variety required.
 """
 
 import json
-from google import genai
-from src.config import GEMINI_API_KEY, GEMINI_TEXT_MODEL, IMAGE_STYLE
-
-
-def _get_client():
-    return genai.Client(api_key=GEMINI_API_KEY)
+from src.config import IMAGE_STYLE
+from src.gemini_helper import generate_text
 
 
 def _build_character_ref(script: dict) -> str:
@@ -56,8 +52,6 @@ def generate_image_prompts(section: dict, duration: float,
     Returns:
         List of {image_prompt, key_phrase, duration_hint} dicts
     """
-    client = _get_client()
-
     # Bounds: at least 1 image per 5s, at most 1 per 2s
     min_images = max(1, int(duration / 5))
     max_images = max(min_images + 1, int(duration / 2))
@@ -107,12 +101,7 @@ Return ONLY a JSON array:
 
 Return valid JSON only, no markdown formatting."""
 
-    response = client.models.generate_content(
-        model=GEMINI_TEXT_MODEL,
-        contents=prompt
-    )
-
-    text = response.text.strip()
+    text = generate_text(prompt).strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1]
         text = text.rsplit("```", 1)[0]

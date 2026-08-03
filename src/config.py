@@ -43,9 +43,20 @@ IMAGE_STYLE = (
     "NO photorealism, NO 3D, NO text, NO watermarks, NO complex shading."
 )
 
-# ── Gemini models ──────────────────────────────────────────────────
-GEMINI_TEXT_MODEL = "gemini-3.5-flash"
-GEMINI_IMAGE_MODEL = "gemini-3.1-flash-image"
+# ── Gemini models (fallback order — tries each until one works) ────
+GEMINI_TEXT_MODELS = [
+    "gemini-3.5-flash",
+    "gemini-3.5-flash-lite",
+    "gemini-3.6-flash",
+]
+GEMINI_IMAGE_MODELS = [
+    "gemini-3.1-flash-image",
+    "gemini-3.1-flash-lite-image",
+    "gemini-3-pro-image",
+]
+# Primary (first in list) — used by default
+GEMINI_TEXT_MODEL = GEMINI_TEXT_MODELS[0]
+GEMINI_IMAGE_MODEL = GEMINI_IMAGE_MODELS[0]
 
 # ── Telegram ───────────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")

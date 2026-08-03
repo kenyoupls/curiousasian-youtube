@@ -3,11 +3,10 @@
 import json
 import shutil
 from pathlib import Path
-from google import genai
 from src.config import (
-    GEMINI_API_KEY, GEMINI_TEXT_MODEL,
     SCRIPTS_QUEUE_DIR, SCRIPTS_DONE_DIR, SCRIPT_LOW_THRESHOLD
 )
+from src.gemini_helper import generate_text
 
 
 def get_queue_count() -> int:
@@ -49,7 +48,6 @@ def get_next_script() -> dict:
 
 def _generate_gemini_backup_script() -> dict:
     """Generate a script using Gemini when Claude scripts run out."""
-    client = genai.Client(api_key=GEMINI_API_KEY)
 
     # Load done scripts to avoid repeats
     done_topics = []
@@ -109,12 +107,7 @@ Return ONLY valid JSON:
 
 Return valid JSON only, no markdown formatting."""
 
-    response = client.models.generate_content(
-        model=GEMINI_TEXT_MODEL,
-        contents=prompt
-    )
-
-    text = response.text.strip()
+    text = generate_text(prompt).strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1]
         text = text.rsplit("```", 1)[0]
