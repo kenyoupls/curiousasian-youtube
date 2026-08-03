@@ -1,4 +1,7 @@
-"""Gemini API helper — auto-fallback across models, never gives up on 503/429."""
+"""Gemini API helper — auto-fallback across models, never gives up on 503/429.
+
+Once a model works, sticks with it for consistency.
+"""
 
 import time
 from google import genai
@@ -7,53 +10,72 @@ from src.config import (
     GEMINI_API_KEY, GEMINI_TEXT_MODELS, GEMINI_IMAGE_MODELS
 )
 
+# Track which model is working — stick with it for consistency
+_working_text_model = None
+_working_image_model = None
+
 
 def _get_client():
     return genai.Client(api_key=GEMINI_API_KEY)
 
 
-def generate_text(prompt: str) -> str:
-    """Generate text — cycles through all models, retries forever on 503/429.
+def _get_model_order(models: list, working_model: str = None) -> list:
+    """Put the known working model first, then the rest."""
+    if working_model and working_model in models:
+        return [working_model] + [m for m in models if m != working_model]
+    return models
 
-    Only gives up on 404 (model doesn't exist) after exhausting all models.
+
+def generate_text(prompt: str) -> str:
+    """Generate text — tries working model first, falls back to others.
+
+    Never gives up on 503/429 — keeps cycling until one works.
     """
+    global _working_text_model
     client = _get_client()
     round_num = 0
+    models = _get_model_order(GEMINI_TEXT_MODELS, _working_text_model)
 
     while True:
         round_num += 1
-        for model in GEMINI_TEXT_MODELS:
+        for model in models:
             try:
                 response = client.models.generate_content(
                     model=model,
                     contents=prompt
                 )
+                _working_text_model = model
+                if round_num == 1:
+                    print(f"    ✅ Using text model: {model}")
                 return response.text
             except Exception as e:
                 err_str = str(e)
                 if "503" in err_str or "429" in err_str:
-                    wait = min(60, 15 * round_num)
+                    wait = min(90, 20 * round_num)
                     print(f"    ⚠️  {model} overloaded (round {round_num}), retrying in {wait}s...")
                     time.sleep(wait)
                 elif "404" in err_str:
-                    print(f"    ⚠️  {model} not available, trying next...")
+                    print(f"    ⚠️  {model} not available, skipping...")
                     continue
                 else:
                     raise
 
 
 def generate_image(prompt: str):
-    """Generate an image — cycles through all models, retries forever on 503/429.
+    """Generate an image — tries working model first, falls back to others.
 
     Returns the response object from Gemini.
-    Only gives up on 404 after exhausting all models.
+    Never gives up on 503/429 — keeps cycling until one works.
+    Sticks with whichever model succeeds for style consistency.
     """
+    global _working_image_model
     client = _get_client()
     round_num = 0
+    models = _get_model_order(GEMINI_IMAGE_MODELS, _working_image_model)
 
     while True:
         round_num += 1
-        for model in GEMINI_IMAGE_MODELS:
+        for model in models:
             try:
                 response = client.models.generate_content(
                     model=model,
@@ -62,6 +84,9 @@ def generate_image(prompt: str):
                         response_modalities=["IMAGE", "TEXT"]
                     )
                 )
+                if _working_image_model != model:
+                    print(f"    ✅ Using image model: {model}")
+                _working_image_model = model
                 return response
             except Exception as e:
                 err_str = str(e)
@@ -70,7 +95,7 @@ def generate_image(prompt: str):
                     print(f"    ⚠️  {model} overloaded (round {round_num}), retrying in {wait}s...")
                     time.sleep(wait)
                 elif "404" in err_str:
-                    print(f"    ⚠️  {model} not available, trying next...")
+                    print(f"    ⚠️  {model} not available, skipping...")
                     continue
                 else:
                     raise
