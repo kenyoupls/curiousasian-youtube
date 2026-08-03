@@ -1,4 +1,4 @@
-"""Gemini API helper — auto-fallback across models on 503/429 errors."""
+"""Gemini API helper — auto-fallback across models, never gives up on 503/429."""
 
 import time
 from google import genai
@@ -12,17 +12,17 @@ def _get_client():
     return genai.Client(api_key=GEMINI_API_KEY)
 
 
-def generate_text(prompt: str, max_retries: int = 3) -> str:
-    """Generate text, auto-falling back across models on failure.
+def generate_text(prompt: str) -> str:
+    """Generate text — cycles through all models, retries forever on 503/429.
 
-    Tries each model in GEMINI_TEXT_MODELS. For each model, retries
-    up to max_retries times with backoff before moving to the next.
+    Only gives up on 404 (model doesn't exist) after exhausting all models.
     """
     client = _get_client()
-    last_error = None
+    round_num = 0
 
-    for model in GEMINI_TEXT_MODELS:
-        for attempt in range(max_retries):
+    while True:
+        round_num += 1
+        for model in GEMINI_TEXT_MODELS:
             try:
                 response = client.models.generate_content(
                     model=model,
@@ -30,38 +30,30 @@ def generate_text(prompt: str, max_retries: int = 3) -> str:
                 )
                 return response.text
             except Exception as e:
-                last_error = e
                 err_str = str(e)
-                # Model unavailable or rate limited — try next model
                 if "503" in err_str or "429" in err_str:
-                    print(f"    ⚠️  {model} unavailable (attempt {attempt + 1}), ", end="")
-                    if attempt < max_retries - 1:
-                        wait = 15 * (attempt + 1)
-                        print(f"retrying in {wait}s...")
-                        time.sleep(wait)
-                    else:
-                        print(f"switching model...")
-                    continue
-                # 404 = model doesn't exist for this account
+                    wait = min(60, 15 * round_num)
+                    print(f"    ⚠️  {model} overloaded (round {round_num}), retrying in {wait}s...")
+                    time.sleep(wait)
                 elif "404" in err_str:
                     print(f"    ⚠️  {model} not available, trying next...")
-                    break  # Skip retries, go to next model
+                    continue
                 else:
-                    raise  # Unknown error — don't retry
-
-    raise RuntimeError(f"All text models failed. Last error: {last_error}")
+                    raise
 
 
-def generate_image(prompt: str, max_retries: int = 3):
-    """Generate an image, auto-falling back across models on failure.
+def generate_image(prompt: str):
+    """Generate an image — cycles through all models, retries forever on 503/429.
 
     Returns the response object from Gemini.
+    Only gives up on 404 after exhausting all models.
     """
     client = _get_client()
-    last_error = None
+    round_num = 0
 
-    for model in GEMINI_IMAGE_MODELS:
-        for attempt in range(max_retries):
+    while True:
+        round_num += 1
+        for model in GEMINI_IMAGE_MODELS:
             try:
                 response = client.models.generate_content(
                     model=model,
@@ -72,21 +64,13 @@ def generate_image(prompt: str, max_retries: int = 3):
                 )
                 return response
             except Exception as e:
-                last_error = e
                 err_str = str(e)
                 if "503" in err_str or "429" in err_str:
-                    print(f"    ⚠️  {model} unavailable (attempt {attempt + 1}), ", end="")
-                    if attempt < max_retries - 1:
-                        wait = 15 * (attempt + 1)
-                        print(f"retrying in {wait}s...")
-                        time.sleep(wait)
-                    else:
-                        print(f"switching model...")
-                    continue
+                    wait = min(90, 20 * round_num)
+                    print(f"    ⚠️  {model} overloaded (round {round_num}), retrying in {wait}s...")
+                    time.sleep(wait)
                 elif "404" in err_str:
                     print(f"    ⚠️  {model} not available, trying next...")
-                    break
+                    continue
                 else:
                     raise
-
-    raise RuntimeError(f"All image models failed. Last error: {last_error}")
