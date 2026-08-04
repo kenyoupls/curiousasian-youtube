@@ -47,7 +47,13 @@ def generate_text(prompt: str) -> str:
                 _working_text_model = model
                 if round_num == 1:
                     print(f"    ✅ Using text model: {model}")
-                return response.text
+                # Guard against None response
+                result = response.text
+                if result is None:
+                    print(f"    ⚠️  {model} returned empty response, retrying...")
+                    time.sleep(5)
+                    continue
+                return result
             except Exception as e:
                 err_str = str(e)
                 if "503" in err_str or "429" in err_str:

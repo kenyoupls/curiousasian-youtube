@@ -107,7 +107,10 @@ Return ONLY valid JSON:
 
 Return valid JSON only, no markdown formatting."""
 
-    text = generate_text(prompt).strip()
+    raw = generate_text(prompt)
+    if not raw:
+        raise RuntimeError("Gemini returned empty response for script generation")
+    text = raw.strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1]
         text = text.rsplit("```", 1)[0]

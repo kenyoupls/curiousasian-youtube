@@ -101,7 +101,10 @@ Return ONLY a JSON array:
 
 Return valid JSON only, no markdown formatting."""
 
-    text = generate_text(prompt).strip()
+    raw = generate_text(prompt)
+    if not raw:
+        raise ValueError("Gemini returned empty response for image prompts")
+    text = raw.strip()
     if text.startswith("```"):
         text = text.split("\n", 1)[1]
         text = text.rsplit("```", 1)[0]
