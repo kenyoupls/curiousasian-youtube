@@ -67,8 +67,9 @@ def generate_pollinations_image(
 
             _last_request_time = time.time()
 
-            # Make request with generous timeout (image generation can take 30-60s)
-            response = requests.get(url, timeout=120, stream=True)
+            # Timeout: 60s connect + 60s read (was 120s single timeout)
+            print(f"    🌐 Requesting image from Pollinations... (attempt {attempt + 1})")
+            response = requests.get(url, timeout=(15, 60), stream=True)
             response.raise_for_status()
 
             # Verify we got an image (not an error page)
