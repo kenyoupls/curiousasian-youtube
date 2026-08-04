@@ -10,7 +10,7 @@ _text_model = None
 _image_model = None
 _key_index = 0
 _last_image_request = 0.0
-IMAGE_REQUEST_DELAY = 7  # seconds between image requests to stay under 10 RPM
+IMAGE_REQUEST_DELAY = 15  # seconds between image requests — generous spacing to avoid 429
 
 
 def _log_key_info():
@@ -102,7 +102,7 @@ def generate_image(prompt):
         time.sleep(wait)
     _last_image_request = time.time()
 
-    for rnd in range(1, 5):
+    for rnd in range(1, 7):  # 6 rounds — more patience
         for model in _ordered(GEMINI_IMAGE_MODELS, _image_model):
             keys_tried = 0
             while keys_tried < max(len(GEMINI_API_KEYS), 1):
@@ -116,6 +116,7 @@ def generate_image(prompt):
                         )
                     )
                     _image_model = model
+                    _last_image_request = time.time()  # reset timer on success
                     return resp
                 except Exception as e:
                     err = str(e)
@@ -125,8 +126,9 @@ def generate_image(prompt):
                         print(f"    ⚠️  Key {key_prefix}... auth failed on {model}, trying next...")
                         continue
                     elif _is_overloaded(err):
-                        wait = (2 ** rnd) + random.uniform(0, 1)
-                        print(f"    ⚠️  {model} overloaded [{rnd}/4], waiting {wait:.0f}s...")
+                        # Aggressive backoff: 30s, 60s, 90s, 120s, 150s, 180s
+                        wait = 30 * rnd + random.uniform(0, 5)
+                        print(f"    ⚠️  {model} rate limited [{rnd}/6], waiting {wait:.0f}s...")
                         time.sleep(wait)
                         break
                     elif "404" in err:

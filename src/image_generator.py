@@ -1,7 +1,8 @@
-"""Image generation — Cloudflare SDXL Lightning primary, Gemini fallback.
+"""Image generation — Gemini primary (best quality), Cloudflare SDXL fallback.
 
 Consistent stick figure character across all scenes using locked
 character DNA prompt, fixed seed base, style modifiers, and negative_prompt.
+Gemini has aggressive rate limiting (15s between requests, long backoff on 429).
 """
 
 import base64
@@ -136,21 +137,21 @@ def _try_gemini(prompt, output_path):
 
 
 def generate_single_image(prompt, output_path, image_index=0):
-    """Cloudflare SDXL (2 tries) → Gemini fallback (2 tries) → fail."""
+    """Gemini (2 tries) → Cloudflare SDXL fallback (2 tries) → fail."""
 
-    cf_prompt = _build_prompt(prompt, for_cloudflare=True)
     gemini_prompt = _build_prompt(prompt, for_cloudflare=False)
+    cf_prompt = _build_prompt(prompt, for_cloudflare=True)
 
-    # Cloudflare — primary (free, reliable, negative_prompt support)
-    for attempt in range(2):
-        print(f"    ☁️  Cloudflare [{attempt+1}/2]...")
-        if _try_cloudflare(cf_prompt, output_path, image_index):
-            return output_path
-
-    # Gemini — fallback
+    # Gemini — primary (best quality, aggressive rate limiting)
     for attempt in range(2):
         print(f"    🎨 Gemini [{attempt+1}/2]...")
         if _try_gemini(gemini_prompt, output_path):
+            return output_path
+
+    # Cloudflare SDXL — fallback (free, reliable)
+    for attempt in range(2):
+        print(f"    ☁️  Cloudflare [{attempt+1}/2]...")
+        if _try_cloudflare(cf_prompt, output_path, image_index):
             return output_path
 
     raise ImageGenerationFailed(f"All methods failed: {output_path.name}")
@@ -191,9 +192,9 @@ def generate_thumbnail(script):
         for_cloudflare=False
     )
 
-    # Cloudflare primary → Gemini fallback → gradient fallback
-    if not _try_cloudflare(cf_prompt, thumb, image_index=999):
-        if not _try_gemini(gemini_prompt, thumb):
+    # Gemini primary → Cloudflare fallback → gradient fallback
+    if not _try_gemini(gemini_prompt, thumb):
+        if not _try_cloudflare(cf_prompt, thumb, image_index=999):
             img = Image.new("RGB", (1280, 720), (30, 20, 60))
             img.save(thumb, "PNG")
 
