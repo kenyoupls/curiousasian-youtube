@@ -5,8 +5,18 @@ based on the story beats, topic shifts, and visual variety required.
 """
 
 import json
+import re
 from src.config import IMAGE_STYLE
 from src.gemini_helper import generate_text
+
+
+def _clean_json(text: str) -> str:
+    """Fix common Gemini JSON issues: trailing commas, single quotes, etc."""
+    # Remove trailing commas before } or ]
+    text = re.sub(r',\s*([}\]])', r'\1', text)
+    # Remove any BOM or invisible chars
+    text = text.strip().strip('﻿')
+    return text
 
 
 def _build_character_ref(script: dict) -> str:
@@ -105,11 +115,26 @@ Return valid JSON only, no markdown formatting."""
     if not raw:
         raise ValueError("Gemini returned empty response for image prompts")
     text = raw.strip()
+    # Strip markdown code fences
     if text.startswith("```"):
         text = text.split("\n", 1)[1]
         text = text.rsplit("```", 1)[0]
+    text = _clean_json(text)
 
-    prompts = json.loads(text)
+    try:
+        prompts = json.loads(text)
+    except json.JSONDecodeError:
+        # Last resort: ask Gemini to fix its own JSON
+        fix_prompt = f"Fix this broken JSON array and return ONLY valid JSON, nothing else:\n{text}"
+        fixed = generate_text(fix_prompt)
+        if not fixed:
+            raise
+        fixed = fixed.strip()
+        if fixed.startswith("```"):
+            fixed = fixed.split("\n", 1)[1]
+            fixed = fixed.rsplit("```", 1)[0]
+        fixed = _clean_json(fixed)
+        prompts = json.loads(fixed)
 
     # Validate bounds
     if len(prompts) < min_images:

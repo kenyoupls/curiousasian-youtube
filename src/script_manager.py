@@ -1,12 +1,20 @@
 """Script manager — reads pre-written Claude scripts, falls back to Gemini."""
 
 import json
+import re
 import shutil
 from pathlib import Path
 from src.config import (
     SCRIPTS_QUEUE_DIR, SCRIPTS_DONE_DIR, SCRIPT_LOW_THRESHOLD
 )
 from src.gemini_helper import generate_text
+
+
+def _clean_json(text: str) -> str:
+    """Fix common Gemini JSON issues: trailing commas, single quotes, etc."""
+    text = re.sub(r',\s*([}\]])', r'\1', text)
+    text = text.strip().strip('﻿')
+    return text
 
 
 def get_queue_count() -> int:
@@ -114,8 +122,21 @@ Return valid JSON only, no markdown formatting."""
     if text.startswith("```"):
         text = text.split("\n", 1)[1]
         text = text.rsplit("```", 1)[0]
+    text = _clean_json(text)
 
-    script = json.loads(text)
+    try:
+        script = json.loads(text)
+    except json.JSONDecodeError:
+        fix_prompt = f"Fix this broken JSON object and return ONLY valid JSON, nothing else:\n{text}"
+        fixed = generate_text(fix_prompt)
+        if not fixed:
+            raise
+        fixed = fixed.strip()
+        if fixed.startswith("```"):
+            fixed = fixed.split("\n", 1)[1]
+            fixed = fixed.rsplit("```", 1)[0]
+        fixed = _clean_json(fixed)
+        script = json.loads(fixed)
     script["_source"] = "gemini_backup"
 
     total_words = sum(len(s["narration"].split()) for s in script["sections"])
