@@ -1,64 +1,45 @@
-"""Pollinations.ai image generation — free, no API key needed."""
+"""Pollinations.ai — free image generation via HTTP GET."""
 
-import time
-import urllib.parse
-import requests
+import time, urllib.parse, requests
 from pathlib import Path
 
-_last_request_time = 0.0
-RATE_LIMIT_DELAY = 5  # 5s between requests (push the limit)
+_last_request = 0.0
 
 
-def generate_pollinations_image(
-    prompt: str,
-    output_path: Path,
-    width: int = 1920,
-    height: int = 1080,
-    max_retries: int = 2,
-    seed: int = None,
-) -> Path:
-    global _last_request_time
+def generate_pollinations_image(prompt, output_path, width=1920, height=1080, seed=None):
+    """Generate image. 3 attempts, 10s rate limit between requests."""
+    global _last_request
 
-    encoded_prompt = urllib.parse.quote(prompt, safe="")
+    encoded = urllib.parse.quote(prompt[:500], safe="")
+    params = f"width={width}&height={height}&nologo=true&safe=true"
+    if seed:
+        params += f"&seed={seed}"
+    url = f"https://image.pollinations.ai/prompt/{encoded}?{params}"
 
-    params = {"width": width, "height": height, "nologo": "true", "safe": "true"}
-    if seed is not None:
-        params["seed"] = seed
-
-    query_string = "&".join(f"{k}={v}" for k, v in params.items())
-    url = f"https://image.pollinations.ai/prompt/{encoded_prompt}?{query_string}"
-
-    for attempt in range(max_retries):
+    for attempt in range(3):
         try:
-            # Rate limiting
-            elapsed = time.time() - _last_request_time
-            if elapsed < RATE_LIMIT_DELAY:
-                time.sleep(RATE_LIMIT_DELAY - elapsed)
+            wait = 10 - (time.time() - _last_request)
+            if wait > 0:
+                time.sleep(wait)
 
-            _last_request_time = time.time()
-            print(f"    🌐 Pollinations request (attempt {attempt + 1})...")
+            _last_request = time.time()
+            print(f"    🌐 Pollinations [{attempt+1}/3]...")
 
-            response = requests.get(url, timeout=(10, 45), stream=True)
-            response.raise_for_status()
+            resp = requests.get(url, timeout=(10, 60))
+            resp.raise_for_status()
 
-            content_type = response.headers.get("content-type", "")
-            if "image" not in content_type:
-                print(f"    ⚠️  Non-image response: {content_type}")
+            if "image" not in resp.headers.get("content-type", ""):
+                print(f"    ⚠️  Not an image response")
                 continue
 
-            with open(output_path, "wb") as f:
-                for chunk in response.iter_content(chunk_size=8192):
-                    f.write(chunk)
-
-            if output_path.exists() and output_path.stat().st_size > 1000:
+            output_path.write_bytes(resp.content)
+            if output_path.stat().st_size > 1000:
                 return output_path
 
-        except requests.exceptions.Timeout:
-            print(f"    ⚠️  Timeout (attempt {attempt + 1})")
-        except requests.exceptions.RequestException as e:
-            print(f"    ⚠️  Failed (attempt {attempt + 1}): {e}")
+        except Exception as e:
+            print(f"    ⚠️  Attempt {attempt+1}: {e}")
 
-        if attempt < max_retries - 1:
-            time.sleep(3)
+        if attempt < 2:
+            time.sleep(5)
 
-    raise Exception(f"Pollinations failed after {max_retries} attempts")
+    raise Exception("Pollinations failed after 3 attempts")

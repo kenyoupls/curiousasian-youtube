@@ -1,79 +1,74 @@
-"""Gemini API helper — fast fallback across models."""
+"""Gemini API — model fallback with sticky selection."""
 
 import time
 from google import genai
 from google.genai import types
-from src.config import (
-    GEMINI_API_KEY, GEMINI_TEXT_MODELS, GEMINI_IMAGE_MODELS
-)
+from src.config import GEMINI_API_KEY, GEMINI_TEXT_MODELS, GEMINI_IMAGE_MODELS
 
-_working_text_model = None
-_working_image_model = None
-MAX_ROUNDS = 2  # Fail fast — don't waste time on broken models
+_text_model = None
+_image_model = None
 
 
-def _get_client():
+def _client():
     return genai.Client(api_key=GEMINI_API_KEY)
 
 
-def generate_text(prompt: str) -> str:
-    global _working_text_model
-    client = _get_client()
-    models = GEMINI_TEXT_MODELS
-    if _working_text_model and _working_text_model in models:
-        models = [_working_text_model] + [m for m in models if m != _working_text_model]
+def _ordered(models, sticky):
+    if sticky and sticky in models:
+        return [sticky] + [m for m in models if m != sticky]
+    return models
 
-    for round_num in range(1, MAX_ROUNDS + 1):
-        for model in models:
+
+def generate_text(prompt):
+    """Try each text model, 3 rounds max. Returns string."""
+    global _text_model
+    client = _client()
+
+    for rnd in range(1, 4):
+        for model in _ordered(GEMINI_TEXT_MODELS, _text_model):
             try:
-                response = client.models.generate_content(model=model, contents=prompt)
-                result = response.text
+                result = client.models.generate_content(model=model, contents=prompt).text
                 if result is None:
                     continue
-                _working_text_model = model
-                if round_num == 1:
-                    print(f"    ✅ Text model: {model}")
+                _text_model = model
+                if rnd == 1:
+                    print(f"    ✅ Text: {model}")
                 return result
             except Exception as e:
-                err_str = str(e)
-                if "503" in err_str or "429" in err_str:
-                    print(f"    ⚠️  {model} overloaded, trying next...")
-                    time.sleep(3)
-                elif "404" in err_str:
+                err = str(e)
+                if "503" in err or "429" in err:
+                    print(f"    ⚠️  {model} overloaded [{rnd}/3]")
+                    time.sleep(5)
+                elif "404" in err:
                     continue
                 else:
                     raise
 
-    raise RuntimeError(f"All Gemini text models failed after {MAX_ROUNDS} rounds")
+    raise RuntimeError("All Gemini text models failed")
 
 
-def generate_image(prompt: str):
-    global _working_image_model
-    client = _get_client()
-    models = GEMINI_IMAGE_MODELS
-    if _working_image_model and _working_image_model in models:
-        models = [_working_image_model] + [m for m in models if m != _working_image_model]
+def generate_image(prompt):
+    """Try each image model, 3 rounds max. Returns response object."""
+    global _image_model
+    client = _client()
 
-    for round_num in range(1, MAX_ROUNDS + 1):
-        for model in models:
+    for rnd in range(1, 4):
+        for model in _ordered(GEMINI_IMAGE_MODELS, _image_model):
             try:
-                response = client.models.generate_content(
-                    model=model,
-                    contents=prompt,
-                    config=types.GenerateContentConfig(
-                        response_modalities=["IMAGE", "TEXT"]
-                    )
+                resp = client.models.generate_content(
+                    model=model, contents=prompt,
+                    config=types.GenerateContentConfig(response_modalities=["IMAGE", "TEXT"])
                 )
-                _working_image_model = model
-                return response
+                _image_model = model
+                return resp
             except Exception as e:
-                err_str = str(e)
-                if "503" in err_str or "429" in err_str:
-                    print(f"    ⚠️  {model} overloaded, trying next...")
-                    time.sleep(3)
-                elif "404" in err_str:
+                err = str(e)
+                if "503" in err or "429" in err:
+                    print(f"    ⚠️  {model} overloaded [{rnd}/3]")
+                    time.sleep(5)
+                elif "404" in err:
                     continue
                 else:
                     raise
 
-    raise RuntimeError(f"All Gemini image models failed after {MAX_ROUNDS} rounds")
+    raise RuntimeError("All Gemini image models failed")
