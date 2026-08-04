@@ -1,5 +1,5 @@
 {
-  "started_at": "2026-08-04T10:37:17.906034",
+  "started_at": "2026-08-04T10:45:19.678626",
   "steps": {
     "script": {
       "title": "Why Asians Never Wear Shoes Inside",
@@ -9,10 +9,20 @@
     "audio": {
       "segments": 10,
       "total_seconds": 109.2
+    },
+    "image_prompts": 21,
+    "images": 21,
+    "audio_production": {
+      "sfx": [
+        "whoosh",
+        "dramatic_hit",
+        "ding"
+      ],
+      "music_duration": 119.2
     }
   },
   "status": "failed",
   "skipped_scripts": [],
-  "error": "All Gemini text models failed: 401 UNAUTHENTICATED. {'error': {'code': 401, 'message': 'Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https",
-  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 148, in run_pipeline\n    result = _build_video_from_script(script, run_log)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 73, in _build_video_from_script\n    image_prompts = generate_all_image_prompts(script, audio_segments)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/image_prompt_generator.py\", line 125, in generate_all_image_prompts\n    section_prompts = generate_image_prompts(section, duration)\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/image_prompt_generator.py\", line 73, in generate_image_prompts\n    raw = generate_text(prompt)\n          ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/gemini_helper.py\", line 87, in generate_text\n    raise RuntimeError(f\"All Gemini text models failed: {last_err[:200] if last_err else 'unknown'}\")\nRuntimeError: All Gemini text models failed: 401 UNAUTHENTICATED. {'error': {'code': 401, 'message': 'Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https\n"
+  "error": "Final concat failed:\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aac @ 0x560875bbaa40] Sample rate index in program config element does not match the sample rate index configured by the container.\n[aist#0:1/aac @ 0x560875b757c0] Decoding error: Invalid data found when processing input\n[auto_aresample_0 @ 0x5608765468c0] Failed to configure output pad on auto_aresample_0\n[af#0:1 @ 0x560875c6cf00] Error reinitializing filters!\nFailed to inject frame into filter network: Invalid argument\nError while filtering: Invalid argument\nConversion failed!",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 148, in run_pipeline\n    result = _build_video_from_script(script, run_log)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 101, in _build_video_from_script\n    video_path = build_video(\n                 ^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/video_builder.py\", line 376, in build_video\n    raise RuntimeError(f\"Final concat failed:\\n{err_summary}\")\nRuntimeError: Final concat failed:\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aac @ 0x560875bbaa40] Sample rate index in program config element does not match the sample rate index configured by the container.\n[aist#0:1/aac @ 0x560875b757c0] Decoding error: Invalid data found when processing input\n[auto_aresample_0 @ 0x5608765468c0] Failed to configure output pad on auto_aresample_0\n[af#0:1 @ 0x560875c6cf00] Error reinitializing filters!\nFailed to inject frame into filter network: Invalid argument\nError while filtering: Invalid argument\nConversion failed!\n"
 }
