@@ -137,20 +137,13 @@ def _try_gemini(prompt, output_path):
 
 
 def generate_single_image(prompt, output_path, image_index=0):
-    """Gemini (2 tries) → Cloudflare SDXL fallback (2 tries) → fail."""
+    """Cloudflare SDXL primary (free). Gemini disabled — no free image API."""
 
-    gemini_prompt = _build_prompt(prompt, for_cloudflare=False)
     cf_prompt = _build_prompt(prompt, for_cloudflare=True)
 
-    # Gemini — primary (best quality, aggressive rate limiting)
-    for attempt in range(2):
-        print(f"    🎨 Gemini [{attempt+1}/2]...")
-        if _try_gemini(gemini_prompt, output_path):
-            return output_path
-
-    # Cloudflare SDXL — fallback (free, reliable)
-    for attempt in range(2):
-        print(f"    ☁️  Cloudflare [{attempt+1}/2]...")
+    # Cloudflare SDXL — primary (free, reliable)
+    for attempt in range(3):
+        print(f"    ☁️  Cloudflare [{attempt+1}/3]...")
         if _try_cloudflare(cf_prompt, output_path, image_index):
             return output_path
 
@@ -186,17 +179,11 @@ def generate_thumbnail(script):
         f"surprised expression, bold composition",
         for_cloudflare=True
     )
-    gemini_prompt = _build_prompt(
-        f"YouTube thumbnail, vibrant colors, {title[:100]}, "
-        f"surprised expression, bold composition",
-        for_cloudflare=False
-    )
 
-    # Gemini primary → Cloudflare fallback → gradient fallback
-    if not _try_gemini(gemini_prompt, thumb):
-        if not _try_cloudflare(cf_prompt, thumb, image_index=999):
-            img = Image.new("RGB", (1280, 720), (30, 20, 60))
-            img.save(thumb, "PNG")
+    # Cloudflare primary → gradient fallback
+    if not _try_cloudflare(cf_prompt, thumb, image_index=999):
+        img = Image.new("RGB", (1280, 720), (30, 20, 60))
+        img.save(thumb, "PNG")
 
     # Title overlay
     img = Image.open(thumb).resize((1280, 720), Image.LANCZOS)
