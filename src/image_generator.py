@@ -1,8 +1,10 @@
-"""Image generation — Gemini primary (best quality), Cloudflare SDXL fallback.
+"""Image generation — Cloudflare SDXL Lightning (free).
 
-Consistent stick figure character across all scenes using locked
-character DNA prompt, fixed seed base, style modifiers, and negative_prompt.
-Gemini has aggressive rate limiting (15s between requests, long backoff on 429).
+Optimised for SDXL Lightning's distilled architecture:
+- Short, style-first prompts (<40 words)
+- 8 diffusion steps (not 20 — Lightning is distilled for 4-8)
+- Weighted syntax for emphasis
+- Focused negative prompt (fewer = better for Lightning)
 """
 
 import base64
@@ -15,33 +17,19 @@ class ImageGenerationFailed(Exception):
     pass
 
 
-# ── Character DNA (never changes) ────────────────────────────────────
-CHARACTER_DNA = (
-    "simple stick figure drawing, children doodle style, "
-    "drawn with thick black marker. "
-    "White circle head, two tiny black dot eyes, "
-    "single horizontal line mouth, messy scribbled brown hair. "
-    "Straight black line body, straight line arms and legs, "
-    "no hands, no feet, simple clothing shape"
+# ── Prompt components (optimised for SDXL Lightning — keep SHORT) ─────
+# Lightning works best with <40 words, style-first, low detail
+CHARACTER_TAG = "simple stick figure with round head and dot eyes"
+
+STYLE_PREFIX = (
+    "(flat 2D cartoon, thick black outlines, solid colors, "
+    "white background, wide landscape:1.2)"
 )
 
-# ── Style lock (appended to every prompt) ─────────────────────────────
-STYLE_LOCK = (
-    "2D flat cartoon, hand-drawn whiteboard sketch style, "
-    "thick black outlines, flat solid earth tone colors, "
-    "two-tone solid color split background, "
-    "simplified but recognizable props and objects, "
-    "wide 16:9 landscape composition, imperfect hand-drawn look"
-)
-
-# ── Negative prompt for Cloudflare SDXL (explicit exclusions) ─────────
+# Focused negative prompt — only the biggest failure modes
 NEGATIVE_PROMPT = (
-    "realistic, photorealistic, 3D, anime, manga, "
-    "detailed face, beautiful face, rosy cheeks, eyebrows, "
-    "shading, gradients, soft lighting, blurry, "
-    "watermark, text, photograph, CGI, render, "
-    "high detail, pretty, cute illustration, "
-    "portrait, close-up, square composition"
+    "(photorealistic, 3D render, anime, shading, gradients, "
+    "blurry, watermark, text, close-up, portrait:1.4)"
 )
 
 # ── Seed base for consistency ─────────────────────────────────────────
@@ -49,19 +37,17 @@ SEED_BASE = 42
 
 
 def _build_prompt(scene, for_cloudflare=True):
-    """Build full prompt: character DNA + scene + style lock."""
-    scene = scene[:200]
-    if for_cloudflare:
-        # Cloudflare SDXL: concise, style-first
-        return f"{CHARACTER_DNA}, {scene}, {STYLE_LOCK}"
-    else:
-        # Gemini: structured format
-        return (
-            f"Wide 16:9 landscape illustration. "
-            f"Character: {CHARACTER_DNA}. "
-            f"Scene: {scene}. "
-            f"Style: {STYLE_LOCK}"
-        )
+    """Build prompt optimised for SDXL Lightning.
+
+    Key principles:
+    - Style FIRST, subject second (Lightning prioritises early tokens)
+    - Keep under 40 words total
+    - Use weight syntax (element:1.2) for emphasis
+    - Scene description trimmed to essentials
+    """
+    # Strip scene to core action — remove any style words the LLM added
+    scene = scene[:120].replace("stick figure character", "").strip(", ")
+    return f"{STYLE_PREFIX}, {CHARACTER_TAG} {scene}"
 
 
 def _fit_to_hd(img: Image.Image) -> Image.Image:
@@ -103,7 +89,7 @@ def _try_cloudflare(prompt, output_path, image_index=0):
             width=1024, height=576,  # 16:9 ratio within SDXL limits
             seed=seed,
             negative_prompt=NEGATIVE_PROMPT,
-            num_steps=20
+            num_steps=8  # Lightning is distilled for 4-8 steps; 20 over-cooks
         )
         # Upscale to full HD
         img = Image.open(output_path).convert("RGB")
