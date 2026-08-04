@@ -54,33 +54,21 @@ def generate_text(prompt):
 
 
 def generate_image(prompt):
-    """Try each image model, 4 rounds with exponential backoff."""
+    """Try gemini-2.5-flash-image, 4 rounds with exponential backoff."""
     global _image_model
     client = _client()
 
     for rnd in range(1, 5):
         for model in _ordered(GEMINI_IMAGE_MODELS, _image_model):
             try:
-                # imagen-3 uses a different API than gemini image models
-                if model.startswith("imagen"):
-                    resp = client.models.generate_images(
-                        model=model,
-                        prompt=prompt,
-                        config=types.GenerateImagesConfig(
-                            number_of_images=1,
-                        )
+                resp = client.models.generate_content(
+                    model=model, contents=prompt,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["IMAGE", "TEXT"]
                     )
-                    _image_model = model
-                    return resp
-                else:
-                    resp = client.models.generate_content(
-                        model=model, contents=prompt,
-                        config=types.GenerateContentConfig(
-                            response_modalities=["IMAGE", "TEXT"]
-                        )
-                    )
-                    _image_model = model
-                    return resp
+                )
+                _image_model = model
+                return resp
             except Exception as e:
                 err = str(e)
                 if _is_overloaded(err):

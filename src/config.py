@@ -51,10 +51,7 @@ GEMINI_TEXT_MODELS = [
     "gemini-3.6-flash",
 ]
 GEMINI_IMAGE_MODELS = [
-    "imagen-3.0-generate-002",    # dedicated image pipeline, most stable
-    "gemini-2.5-flash-image",
-    "gemini-3.1-flash-image",
-    "gemini-3-pro-image",
+    "gemini-2.5-flash-image",     # only free image model (~500/day at 1024x1024)
 ]
 # Primary (first in list) — used by default
 GEMINI_TEXT_MODEL = GEMINI_TEXT_MODELS[0]

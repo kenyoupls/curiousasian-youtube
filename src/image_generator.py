@@ -56,43 +56,26 @@ def _fit_to_hd(img: Image.Image) -> Image.Image:
     return img
 
 
-def _try_imagen(prompt, output_path):
-    """Try Google Imagen via Gemini API. Returns True on success.
-
-    Handles both imagen-3 (generate_images) and gemini image models
-    (generate_content) response formats.
-    """
+def _try_gemini(prompt, output_path):
+    """Try Gemini image generation (gemini-2.5-flash-image). Returns True on success."""
     try:
         from src.gemini_helper import generate_image
-        full_prompt = f"Wide 16:9 landscape illustration, simple stick figure cartoon: {prompt[:180]}"
-        resp = generate_image(full_prompt)
-        if not resp:
+        resp = generate_image(
+            f"Wide 16:9 landscape illustration, simple stick figure cartoon: {prompt[:180]}"
+        )
+        if not resp or not resp.candidates:
             return False
-
-        # imagen-3 response format: resp.generated_images[].image.image_bytes
-        if hasattr(resp, 'generated_images') and resp.generated_images:
-            img_data = resp.generated_images[0].image.image_bytes
-            if isinstance(img_data, str):
-                img_data = base64.b64decode(img_data)
-            output_path.write_bytes(img_data)
-            img = Image.open(output_path).convert("RGB")
-            img = _fit_to_hd(img)
-            img.save(output_path, "PNG")
-            return True
-
-        # gemini image model response format: resp.candidates[].content.parts[].inline_data
-        if hasattr(resp, 'candidates') and resp.candidates:
-            for part in resp.candidates[0].content.parts:
-                if part.inline_data and part.inline_data.mime_type.startswith("image/"):
-                    data = part.inline_data.data
-                    raw = base64.b64decode(data) if isinstance(data, str) else data
-                    output_path.write_bytes(raw)
-                    img = Image.open(output_path).convert("RGB")
-                    img = _fit_to_hd(img)
-                    img.save(output_path, "PNG")
-                    return True
+        for part in resp.candidates[0].content.parts:
+            if part.inline_data and part.inline_data.mime_type.startswith("image/"):
+                data = part.inline_data.data
+                raw = base64.b64decode(data) if isinstance(data, str) else data
+                output_path.write_bytes(raw)
+                img = Image.open(output_path).convert("RGB")
+                img = _fit_to_hd(img)
+                img.save(output_path, "PNG")
+                return True
     except Exception as e:
-        print(f"    ⚠️  Imagen: {e}")
+        print(f"    ⚠️  Gemini image: {e}")
     return False
 
 
@@ -116,8 +99,8 @@ def generate_single_image(prompt, output_path):
 
     # Google Imagen — primary
     for attempt in range(2):
-        print(f"    🎨 Imagen [{attempt+1}/2]...")
-        if _try_imagen(prompt, output_path):
+        print(f"    🎨 Gemini [{attempt+1}/2]...")
+        if _try_gemini(prompt, output_path):
             return output_path
 
     # Pollinations — fallback
@@ -155,7 +138,7 @@ def generate_thumbnail(script):
 
     # Try Imagen first, then Pollinations
     prompt = f"YouTube thumbnail, stick figure cartoon, vibrant, {title[:100]}, surprised stick figure character"
-    if not _try_imagen(prompt, thumb):
+    if not _try_gemini(prompt, thumb):
         if not _try_pollinations(
             f"stick figure YouTube thumbnail, thick outlines, vibrant, {title[:100]}, surprised character",
             thumb
