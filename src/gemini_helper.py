@@ -9,6 +9,8 @@ from src.config import GEMINI_API_KEYS, GEMINI_TEXT_MODELS, GEMINI_IMAGE_MODELS
 _text_model = None
 _image_model = None
 _key_index = 0
+_last_image_request = 0.0
+IMAGE_REQUEST_DELAY = 7  # seconds between image requests to stay under 10 RPM
 
 
 def _log_key_info():
@@ -89,9 +91,16 @@ def generate_text(prompt):
 
 def generate_image(prompt):
     """Try image models with key rotation, 4 rounds with exponential backoff."""
-    global _image_model
+    global _image_model, _last_image_request
     _log_key_info()
     last_err = None
+
+    # Rate limit: wait between image requests to stay under ~10 RPM
+    wait = IMAGE_REQUEST_DELAY - (time.time() - _last_image_request)
+    if wait > 0:
+        print(f"    ⏳ Rate limit: waiting {wait:.0f}s...")
+        time.sleep(wait)
+    _last_image_request = time.time()
 
     for rnd in range(1, 5):
         for model in _ordered(GEMINI_IMAGE_MODELS, _image_model):

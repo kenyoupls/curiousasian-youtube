@@ -1,4 +1,8 @@
-"""Image generation — Google Imagen primary, Pollinations fallback."""
+"""Image generation — Gemini primary, Pollinations fallback.
+
+Consistent stick figure character across all scenes using locked
+character DNA prompt, fixed seed base, and style modifiers.
+"""
 
 import base64
 from pathlib import Path
@@ -10,20 +14,46 @@ class ImageGenerationFailed(Exception):
     pass
 
 
-# Stick figure style prefix for all image prompts
-STICK_FIGURE_STYLE = (
-    "simple stick figure cartoon, OverSimplified style, "
-    "round white head, two dot eyes, straight line mouth, "
-    "messy brown hair, stick body, thick black outlines, "
-    "flat solid colors, NO photorealism, NO 3D, NO shading, NO gradients, "
-    "simple background. "
+# ── Character DNA (never changes) ────────────────────────────────────
+CHARACTER_DNA = (
+    "oversized round white circle head, "
+    "two small black dot eyes close together in center of face, "
+    "thin straight horizontal line mouth, "
+    "wild messy brown hair surrounding the head like a mane, "
+    "single thin black line stick body, "
+    "thin black line arms and legs with no hands or feet, "
+    "simple clothing shape over stick body"
 )
 
+# ── Style lock (never changes, appended to every prompt) ─────────────
+STYLE_LOCK = (
+    "2D flat cartoon, two-tone solid color split background, "
+    "thick black outlines on everything, flat solid earth tone colors, "
+    "simplified but recognizable props and objects, "
+    "character is more simplified than surrounding objects, "
+    "wide 16:9 landscape composition, "
+    "NOT realistic, NOT 3D, NOT anime, NOT detailed faces, "
+    "NOT photorealistic, NOT shading, NOT gradients"
+)
 
-def _prompt(scene):
-    """Build image prompt: stick figure style + scene description."""
+# ── Seed base for Pollinations consistency ───────────────────────────
+SEED_BASE = 42
+
+
+def _build_prompt(scene, for_pollinations=False):
+    """Build full prompt: character DNA + scene + style lock."""
     scene = scene[:180]
-    return f"{STICK_FIGURE_STYLE}{scene}"
+    if for_pollinations:
+        # Pollinations: character DNA first, then scene, then style
+        return f"{CHARACTER_DNA}, {scene}, {STYLE_LOCK}"
+    else:
+        # Gemini: slightly different format
+        return (
+            f"Wide 16:9 landscape illustration. "
+            f"Character: {CHARACTER_DNA}. "
+            f"Scene: {scene}. "
+            f"Style: {STYLE_LOCK}"
+        )
 
 
 def _fit_to_hd(img: Image.Image) -> Image.Image:
@@ -39,17 +69,14 @@ def _fit_to_hd(img: Image.Image) -> Image.Image:
     img_ratio = w / h
 
     if img_ratio > target_ratio:
-        # Image is wider — scale by height, crop sides
         new_h = target_h
         new_w = int(new_h * img_ratio)
     else:
-        # Image is taller — scale by width, crop top/bottom
         new_w = target_w
         new_h = int(new_w / img_ratio)
 
     img = img.resize((new_w, new_h), Image.LANCZOS)
 
-    # Center crop to exact target
     left = (new_w - target_w) // 2
     top = (new_h - target_h) // 2
     img = img.crop((left, top, left + target_w, top + target_h))
@@ -57,12 +84,10 @@ def _fit_to_hd(img: Image.Image) -> Image.Image:
 
 
 def _try_gemini(prompt, output_path):
-    """Try Gemini image generation (gemini-2.5-flash-image). Returns True on success."""
+    """Try Gemini image generation. Returns True on success."""
     try:
         from src.gemini_helper import generate_image
-        resp = generate_image(
-            f"Wide 16:9 landscape illustration, simple stick figure cartoon: {prompt[:180]}"
-        )
+        resp = generate_image(prompt)
         if not resp or not resp.candidates:
             return False
         for part in resp.candidates[0].content.parts:
@@ -79,11 +104,15 @@ def _try_gemini(prompt, output_path):
     return False
 
 
-def _try_pollinations(prompt, output_path):
-    """Try Pollinations.ai. Returns True on success."""
+def _try_pollinations(prompt, output_path, image_index=0):
+    """Try Pollinations.ai with locked model + seed. Returns True on success."""
     try:
         from src.pollinations_helper import generate_pollinations_image
-        generate_pollinations_image(_prompt(prompt), output_path, VIDEO_WIDTH, VIDEO_HEIGHT)
+        seed = SEED_BASE + image_index
+        generate_pollinations_image(
+            prompt, output_path, VIDEO_WIDTH, VIDEO_HEIGHT,
+            seed=seed, model="flux"
+        )
         img = Image.open(output_path).convert("RGB")
         if img.size != (VIDEO_WIDTH, VIDEO_HEIGHT):
             img = _fit_to_hd(img)
@@ -94,19 +123,22 @@ def _try_pollinations(prompt, output_path):
     return False
 
 
-def generate_single_image(prompt, output_path):
-    """Google Imagen (2 tries) → Pollinations (2 tries) → fail."""
+def generate_single_image(prompt, output_path, image_index=0):
+    """Gemini (2 tries) → Pollinations (2 tries) → fail."""
 
-    # Google Imagen — primary
+    gemini_prompt = _build_prompt(prompt, for_pollinations=False)
+    poll_prompt = _build_prompt(prompt, for_pollinations=True)
+
+    # Gemini — primary
     for attempt in range(2):
         print(f"    🎨 Gemini [{attempt+1}/2]...")
-        if _try_gemini(prompt, output_path):
+        if _try_gemini(gemini_prompt, output_path):
             return output_path
 
     # Pollinations — fallback
     for attempt in range(2):
         print(f"    🌐 Pollinations [{attempt+1}/2]...")
-        if _try_pollinations(prompt, output_path):
+        if _try_pollinations(poll_prompt, output_path, image_index):
             return output_path
 
     raise ImageGenerationFailed(f"All methods failed: {output_path.name}")
@@ -124,7 +156,7 @@ def generate_all_images(image_prompts):
             paths.append(out)
             continue
         print(f"  🖼️  [{i+1}/{len(image_prompts)}] Generating...")
-        generate_single_image(p["image_prompt"], out)
+        generate_single_image(p["image_prompt"], out, image_index=i)
         paths.append(out)
 
     print(f"🖼️  {len(paths)} images total")
@@ -136,13 +168,21 @@ def generate_thumbnail(script):
     thumb = OUTPUT_DIR / "thumbnail.png"
     title = script["title"]
 
-    # Try Imagen first, then Pollinations
-    prompt = f"YouTube thumbnail, stick figure cartoon, vibrant, {title[:100]}, surprised stick figure character"
-    if not _try_gemini(prompt, thumb):
-        if not _try_pollinations(
-            f"stick figure YouTube thumbnail, thick outlines, vibrant, {title[:100]}, surprised character",
-            thumb
-        ):
+    # Gemini prompt
+    gemini_prompt = _build_prompt(
+        f"YouTube thumbnail, vibrant colors, {title[:100]}, "
+        f"surprised expression, bold composition",
+        for_pollinations=False
+    )
+    # Pollinations prompt
+    poll_prompt = _build_prompt(
+        f"YouTube thumbnail, vibrant colors, {title[:100]}, "
+        f"surprised expression, bold composition",
+        for_pollinations=True
+    )
+
+    if not _try_gemini(gemini_prompt, thumb):
+        if not _try_pollinations(poll_prompt, thumb, image_index=999):
             # Fallback gradient
             img = Image.new("RGB", (1280, 720), (30, 20, 60))
             img.save(thumb, "PNG")
