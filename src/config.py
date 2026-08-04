@@ -57,8 +57,7 @@ GEMINI_TEXT_MODELS = [
     "gemini-3.6-flash",           # fallback
 ]
 GEMINI_IMAGE_MODELS = [
-    # No free Gemini image models — all require billing
-    # "gemini-3.1-flash-lite-image",  # Nano Banana 2 Lite — ~$0.034/image
+    "gemini-2.5-flash-preview-image",  # Nano Banana — 500 RPD free tier
 ]
 # Primary (first in list) — used by default
 GEMINI_TEXT_MODEL = GEMINI_TEXT_MODELS[0]
