@@ -1,5 +1,5 @@
 {
-  "started_at": "2026-08-04T10:45:19.678626",
+  "started_at": "2026-08-04T11:18:54.586830",
   "steps": {
     "script": {
       "title": "Why Asians Never Wear Shoes Inside",
@@ -19,10 +19,11 @@
         "ding"
       ],
       "music_duration": 119.2
-    }
+    },
+    "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4"
   },
-  "status": "failed",
+  "status": "success",
   "skipped_scripts": [],
-  "error": "Final concat failed:\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aac @ 0x560875bbaa40] Sample rate index in program config element does not match the sample rate index configured by the container.\n[aist#0:1/aac @ 0x560875b757c0] Decoding error: Invalid data found when processing input\n[auto_aresample_0 @ 0x5608765468c0] Failed to configure output pad on auto_aresample_0\n[af#0:1 @ 0x560875c6cf00] Error reinitializing filters!\nFailed to inject frame into filter network: Invalid argument\nError while filtering: Invalid argument\nConversion failed!",
-  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 148, in run_pipeline\n    result = _build_video_from_script(script, run_log)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 101, in _build_video_from_script\n    video_path = build_video(\n                 ^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/video_builder.py\", line 376, in build_video\n    raise RuntimeError(f\"Final concat failed:\\n{err_summary}\")\nRuntimeError: Final concat failed:\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aist#0:1/aac @ 0x560875b757c0] Error submitting packet to decoder: Invalid data found when processing input\n[aac @ 0x560875bbaa40] Sample rate index in program config element does not match the sample rate index configured by the container.\n[aist#0:1/aac @ 0x560875b757c0] Decoding error: Invalid data found when processing input\n[auto_aresample_0 @ 0x5608765468c0] Failed to configure output pad on auto_aresample_0\n[af#0:1 @ 0x560875c6cf00] Error reinitializing filters!\nFailed to inject frame into filter network: Invalid argument\nError while filtering: Invalid argument\nConversion failed!\n"
+  "completed_at": "2026-08-04T11:45:04.887854",
+  "total_duration_seconds": 109.2
 }
