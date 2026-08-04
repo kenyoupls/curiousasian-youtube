@@ -4,3 +4,5 @@ __pycache__/
 .env
 *.egg-info/
 .venv/
+claude_script_prompt.md
+data/topics_100.json
