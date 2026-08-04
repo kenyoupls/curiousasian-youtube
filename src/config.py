@@ -57,11 +57,11 @@ GEMINI_TEXT_MODELS = [
     "gemini-3.6-flash",           # fallback
 ]
 GEMINI_IMAGE_MODELS = [
-    "gemini-3.6-flash",           # 20 RPD — best quality free image model
+    "gemini-3.1-flash-lite-image",  # Nano Banana 2 Lite — free tier image model
 ]
 # Primary (first in list) — used by default
 GEMINI_TEXT_MODEL = GEMINI_TEXT_MODELS[0]
-GEMINI_IMAGE_MODEL = GEMINI_IMAGE_MODELS[0]
+GEMINI_IMAGE_MODEL = GEMINI_IMAGE_MODELS[0]  # gemini-3.1-flash-lite-image
 
 # ── Cloudflare Workers AI ──────────────────────────────────────────
 CLOUDFLARE_ACCOUNT_ID = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
