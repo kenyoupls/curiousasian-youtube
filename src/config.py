@@ -57,7 +57,8 @@ GEMINI_TEXT_MODELS = [
     "gemini-3.6-flash",           # fallback
 ]
 GEMINI_IMAGE_MODELS = [
-    "gemini-2.5-flash-preview-image",  # Nano Banana — 500 RPD free tier
+    # All Gemini image models are paid — no free tier exists
+    # Cloudflare SDXL Lightning is the only free option
 ]
 # Primary (first in list) — used by default
 GEMINI_TEXT_MODEL = GEMINI_TEXT_MODELS[0]
