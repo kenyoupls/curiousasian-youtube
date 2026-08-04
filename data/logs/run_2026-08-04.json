@@ -1,18 +1,28 @@
 {
-  "started_at": "2026-08-04T03:37:53.224471",
+  "started_at": "2026-08-04T09:10:19.254238",
   "steps": {
     "script": {
-      "title": "Why You Never Whistle at Night in Southeast Asia",
+      "title": "Why Asians Never Wear Shoes Inside",
       "source": "claude",
-      "sections": 7
+      "sections": 10
     },
     "audio": {
-      "segments": 7,
-      "total_seconds": 498.1
+      "segments": 10,
+      "total_seconds": 109.2
+    },
+    "image_prompts": 22,
+    "images": 22,
+    "audio_production": {
+      "sfx": [
+        "whoosh",
+        "dramatic_hit",
+        "ding"
+      ],
+      "music_duration": 119.2
     }
   },
   "status": "failed",
   "skipped_scripts": [],
-  "error": "Expecting property name enclosed in double quotes: line 7 column 3 (char 524)",
-  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 148, in run_pipeline\n    result = _build_video_from_script(script, run_log)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 73, in _build_video_from_script\n    image_prompts = generate_all_image_prompts(script, audio_segments)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/image_prompt_generator.py\", line 161, in generate_all_image_prompts\n    section_prompts = generate_image_prompts(\n                      ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/image_prompt_generator.py\", line 112, in generate_image_prompts\n    prompts = json.loads(text)\n              ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/json/decoder.py\", line 337, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/json/decoder.py\", line 353, in raw_decode\n    obj, end = self.scan_once(s, idx)\n               ^^^^^^^^^^^^^^^^^^^^^^\njson.decoder.JSONDecodeError: Expecting property name enclosed in double quotes: line 7 column 3 (char 524)\n"
+  "error": "Final concat failed: %  1%  0%  1%  1%  1%  1%\n[libx264 @ 0x557f2542d900] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 34% 43% 13%  1%  2%  2%  2%  1%  2%\n[libx264 @ 0x557f2542d900] i8c dc,h,v,p: 75% 12% 10%  3%\n[libx264 @ 0x557f2542d900] Weighted P-Frames: Y:7.2% UV:7.2%\n[libx264 @ 0x557f2542d900] ref P L0: 89.0%  0.2%  6.3%  4.5%\n[libx264 @ 0x557f2542d900] ref B L0: 41.8% 57.1%  1.1%\n[libx264 @ 0x557f2542d900] ref B L1: 92.0%  8.0%\n[libx264 @ 0x557f2542d900] kb/s:151.71\n[aac @ 0x557f255779c0] Qavg: 58901.543\nConversion failed!\n",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 148, in run_pipeline\n    result = _build_video_from_script(script, run_log)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 101, in _build_video_from_script\n    video_path = build_video(\n                 ^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/video_builder.py\", line 358, in build_video\n    raise RuntimeError(f\"Final concat failed: {result.stderr[-500:]}\")\nRuntimeError: Final concat failed: %  1%  0%  1%  1%  1%  1%\n[libx264 @ 0x557f2542d900] i4 v,h,dc,ddl,ddr,vr,hd,vl,hu: 34% 43% 13%  1%  2%  2%  2%  1%  2%\n[libx264 @ 0x557f2542d900] i8c dc,h,v,p: 75% 12% 10%  3%\n[libx264 @ 0x557f2542d900] Weighted P-Frames: Y:7.2% UV:7.2%\n[libx264 @ 0x557f2542d900] ref P L0: 89.0%  0.2%  6.3%  4.5%\n[libx264 @ 0x557f2542d900] ref B L0: 41.8% 57.1%  1.1%\n[libx264 @ 0x557f2542d900] ref B L1: 92.0%  8.0%\n[libx264 @ 0x557f2542d900] kb/s:151.71\n[aac @ 0x557f255779c0] Qavg: 58901.543\nConversion failed!\n\n"
 }
