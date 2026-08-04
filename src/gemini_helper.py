@@ -1,4 +1,4 @@
-"""Gemini API helper — auto-fallback across models, never gives up on 503/429.
+"""Gemini API helper — auto-fallback across models, gives up after max retries.
 
 Once a model works, sticks with it for consistency.
 """
@@ -13,6 +13,8 @@ from src.config import (
 # Track which model is working — stick with it for consistency
 _working_text_model = None
 _working_image_model = None
+
+MAX_ROUNDS = 5  # Max retry rounds before giving up (each round tries all models)
 
 
 def _get_client():
@@ -29,15 +31,13 @@ def _get_model_order(models: list, working_model: str = None) -> list:
 def generate_text(prompt: str) -> str:
     """Generate text — tries working model first, falls back to others.
 
-    Never gives up on 503/429 — keeps cycling until one works.
+    Retries up to MAX_ROUNDS times, then raises.
     """
     global _working_text_model
     client = _get_client()
-    round_num = 0
     models = _get_model_order(GEMINI_TEXT_MODELS, _working_text_model)
 
-    while True:
-        round_num += 1
+    for round_num in range(1, MAX_ROUNDS + 1):
         for model in models:
             try:
                 response = client.models.generate_content(
@@ -57,8 +57,8 @@ def generate_text(prompt: str) -> str:
             except Exception as e:
                 err_str = str(e)
                 if "503" in err_str or "429" in err_str:
-                    wait = min(90, 20 * round_num)
-                    print(f"    ⚠️  {model} overloaded (round {round_num}), retrying in {wait}s...")
+                    wait = min(30, 10 * round_num)
+                    print(f"    ⚠️  {model} overloaded (round {round_num}/{MAX_ROUNDS}), retrying in {wait}s...")
                     time.sleep(wait)
                 elif "404" in err_str:
                     print(f"    ⚠️  {model} not available, skipping...")
@@ -66,21 +66,20 @@ def generate_text(prompt: str) -> str:
                 else:
                     raise
 
+    raise RuntimeError(f"All Gemini text models failed after {MAX_ROUNDS} rounds")
+
 
 def generate_image(prompt: str):
     """Generate an image — tries working model first, falls back to others.
 
     Returns the response object from Gemini.
-    Never gives up on 503/429 — keeps cycling until one works.
-    Sticks with whichever model succeeds for style consistency.
+    Retries up to MAX_ROUNDS times, then raises.
     """
     global _working_image_model
     client = _get_client()
-    round_num = 0
     models = _get_model_order(GEMINI_IMAGE_MODELS, _working_image_model)
 
-    while True:
-        round_num += 1
+    for round_num in range(1, MAX_ROUNDS + 1):
         for model in models:
             try:
                 response = client.models.generate_content(
@@ -97,11 +96,13 @@ def generate_image(prompt: str):
             except Exception as e:
                 err_str = str(e)
                 if "503" in err_str or "429" in err_str:
-                    wait = min(90, 20 * round_num)
-                    print(f"    ⚠️  {model} overloaded (round {round_num}), retrying in {wait}s...")
+                    wait = min(30, 10 * round_num)
+                    print(f"    ⚠️  {model} overloaded (round {round_num}/{MAX_ROUNDS}), retrying in {wait}s...")
                     time.sleep(wait)
                 elif "404" in err_str:
                     print(f"    ⚠️  {model} not available, skipping...")
                     continue
                 else:
                     raise
+
+    raise RuntimeError(f"All Gemini image models failed after {MAX_ROUNDS} rounds")
