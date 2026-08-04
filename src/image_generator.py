@@ -13,8 +13,13 @@ class ImageGenerationFailed(Exception):
 
 def _prompt(scene):
     """Short style + scene for Pollinations URL."""
-    scene = scene[:250]
-    return f"flat 2D cartoon, bold outlines, solid colors, white background. {scene}"
+    scene = scene[:200]
+    return (
+        "simple flat vector illustration, Kurzgesagt style, "
+        "2D cartoon, bold black outlines, solid flat colors, NO gradients, "
+        "NO photorealism, NO 3D rendering, NO realistic shading, "
+        f"clean minimal background. {scene}"
+    )
 
 
 def generate_single_image(prompt, output_path):
@@ -73,7 +78,7 @@ def generate_thumbnail(script):
 
     try:
         generate_pollinations_image(
-            f"YouTube thumbnail, cartoon, vibrant, {title[:100]}, surprised character",
+            f"flat 2D cartoon YouTube thumbnail, bold outlines, solid colors, vibrant, {title[:100]}, surprised cartoon character, Kurzgesagt style, NO photorealism",
             thumb, 1280, 720
         )
     except Exception:

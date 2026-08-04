@@ -217,6 +217,7 @@ def _generate_intro_bumper(output_path: Path, duration: float = 2.5) -> Path:
     cmd = [
         "ffmpeg", "-y",
         "-loop", "1", "-i", str(intro_img_path),
+        "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo",
         "-vf", (
             f"zoompan=z='min(zoom+0.0005,1.05)':x='iw/2-(iw/zoom/2)'"
             f":y='ih/2-(ih/zoom/2)':d={frames}"
@@ -225,7 +226,8 @@ def _generate_intro_bumper(output_path: Path, duration: float = 2.5) -> Path:
         ),
         "-t", str(duration),
         "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-        "-pix_fmt", "yuv420p", "-an",
+        "-c:a", "aac", "-b:a", "192k",
+        "-pix_fmt", "yuv420p", "-shortest",
         str(output_path)
     ]
 
@@ -302,6 +304,7 @@ def _generate_end_screen(output_path: Path, duration: float = 5.0) -> Path:
     cmd = [
         "ffmpeg", "-y",
         "-loop", "1", "-i", str(end_img_path),
+        "-f", "lavfi", "-i", f"anullsrc=r=44100:cl=stereo",
         "-vf", (
             f"zoompan=z='1':x='0':y='0':d={frames}"
             f":s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:fps={VIDEO_FPS},"
@@ -309,7 +312,8 @@ def _generate_end_screen(output_path: Path, duration: float = 5.0) -> Path:
         ),
         "-t", str(duration),
         "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
-        "-pix_fmt", "yuv420p", "-an",
+        "-c:a", "aac", "-b:a", "192k",
+        "-pix_fmt", "yuv420p", "-shortest",
         str(output_path)
     ]
 
