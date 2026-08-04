@@ -61,6 +61,7 @@ jobs:
           git config user.email "bot@curiosasian.com"
           git add scripts/ data/
           git diff --cached --quiet || git commit -m "Pipeline run [$(date +%Y-%m-%d)]"
+          git pull --rebase || true
           git push
 
       - name: Clean up output files
