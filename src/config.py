@@ -31,8 +31,8 @@ CHANNEL_NAME = "CuriousAsian"
 CHANNEL_TAGLINE = "Your grandma's rules, finally explained."
 
 # ── Voice ──────────────────────────────────────────────────────────
-VOICE_ENGINE = os.environ.get("VOICE_ENGINE", "edge-tts")  # "edge-tts" (default) or "gtts"
-EDGE_TTS_VOICE = os.environ.get("EDGE_TTS_VOICE", "en-GB-ThomasNeural")
+# Google Cloud TTS is now primary, gTTS is fallback
+# Old edge-tts config kept for reference only
 
 # ── Video ──────────────────────────────────────────────────────────
 VIDEO_WIDTH = 1920
@@ -64,6 +64,13 @@ GEMINI_IMAGE_MODELS = [
 # Primary (first in list) — used by default
 GEMINI_TEXT_MODEL = GEMINI_TEXT_MODELS[0]
 GEMINI_IMAGE_MODEL = GEMINI_IMAGE_MODELS[0]
+
+# ── Cloudflare Workers AI ──────────────────────────────────────────
+CLOUDFLARE_ACCOUNT_ID = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
+CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
+
+# ── Google Cloud TTS ──────────────────────────────────────────────
+GOOGLE_TTS_API_KEY = os.environ.get("GOOGLE_TTS_API_KEY", "")
 
 # ── Telegram ───────────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
