@@ -70,7 +70,7 @@ CLOUDFLARE_ACCOUNT_ID = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
 CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
 
 # ── Google Cloud TTS ──────────────────────────────────────────────
-GOOGLE_TTS_API_KEY = os.environ.get("GOOGLE_TTS_API_KEY", "")
+GOOGLE_TTS_API_KEY = os.environ.get("GEMINI_TTS_API_KEY", "")
 
 # ── Telegram ───────────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
