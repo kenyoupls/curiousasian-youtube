@@ -62,9 +62,9 @@ def generate_image_prompts(section: dict, duration: float,
     Returns:
         List of {image_prompt, key_phrase, duration_hint} dicts
     """
-    # Bounds: at least 1 image per 5s, at most 1 per 2s
-    min_images = max(1, int(duration / 5))
-    max_images = max(min_images + 1, int(duration / 2))
+    # Bounds: 1 image per 3s (min) to 1 per 1s (max)
+    min_images = max(1, int(duration / 3))
+    max_images = max(min_images + 1, int(duration / 1))
 
     char_block = ""
     if character_ref:
