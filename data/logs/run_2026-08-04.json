@@ -1,29 +1,29 @@
 {
-  "started_at": "2026-08-04T15:43:34.761183",
+  "started_at": "2026-08-04T16:03:53.961174",
   "steps": {
     "script": {
-      "title": "Why Asians Leave Chopsticks Standing Up",
-      "source": "gemini_backup",
-      "sections": 17
+      "title": "Why Asians Never Wear Shoes Inside",
+      "source": "claude",
+      "sections": 10
     },
     "audio": {
-      "segments": 17,
-      "total_seconds": 155.8
+      "segments": 10,
+      "total_seconds": 63.9
     },
-    "image_prompts": 28,
-    "images": 28,
+    "image_prompts": 10,
+    "images": 10,
     "audio_production": {
       "sfx": [
         "whoosh",
         "dramatic_hit",
         "ding"
       ],
-      "music_duration": 165.8
+      "music_duration": 73.9
     },
     "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4"
   },
   "status": "success",
   "skipped_scripts": [],
-  "completed_at": "2026-08-04T15:48:19.707557",
-  "total_duration_seconds": 155.8
+  "completed_at": "2026-08-04T16:12:51.214674",
+  "total_duration_seconds": 63.9
 }
