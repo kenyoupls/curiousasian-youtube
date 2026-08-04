@@ -2,16 +2,19 @@
 
 import time
 import random
+import itertools
 from google import genai
 from google.genai import types
-from src.config import GEMINI_API_KEY, GEMINI_TEXT_MODELS, GEMINI_IMAGE_MODELS
+from src.config import GEMINI_API_KEYS, GEMINI_TEXT_MODELS, GEMINI_IMAGE_MODELS
 
 _text_model = None
 _image_model = None
+_key_pool = itertools.cycle(GEMINI_API_KEYS) if GEMINI_API_KEYS else None
 
 
 def _client():
-    return genai.Client(api_key=GEMINI_API_KEY)
+    key = next(_key_pool) if _key_pool else ""
+    return genai.Client(api_key=key)
 
 
 def _ordered(models, sticky):

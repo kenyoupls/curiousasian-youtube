@@ -91,7 +91,10 @@ def _concat_clips(clip_paths: list[Path], output_path: Path) -> Path:
     concat_file.unlink(missing_ok=True)
 
     if result.returncode != 0:
-        raise RuntimeError(f"Concat failed: {result.stderr[-300:]}")
+        err_lines = [l for l in result.stderr.splitlines()
+                     if any(k in l.lower() for k in ["error", "invalid", "no such", "failed", "mismatch"])]
+        err_summary = "\n".join(err_lines[-5:]) if err_lines else result.stderr[:500]
+        raise RuntimeError(f"Concat failed: {err_summary}")
     return output_path
 
 
@@ -322,7 +325,18 @@ def build_video(script: dict, image_paths: list[Path],
             "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest",
             str(section_vid)
         ]
-        subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        merge_result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        if merge_result.returncode != 0:
+            print(f"  ⚠️  Audio merge failed for section {sec_idx}, using silent video")
+            # Add silent audio so concat streams are consistent
+            cmd_silent = [
+                "ffmpeg", "-y",
+                "-i", str(silent_vid),
+                "-f", "lavfi", "-i", "anullsrc=r=44100:cl=stereo",
+                "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+                "-shortest", str(section_vid)
+            ]
+            subprocess.run(cmd_silent, capture_output=True, text=True, timeout=300)
         silent_vid.unlink(missing_ok=True)
 
         section_video_paths.append(section_vid)
@@ -355,7 +369,11 @@ def build_video(script: dict, image_paths: list[Path],
     ]
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=600)
     if result.returncode != 0:
-        raise RuntimeError(f"Final concat failed: {result.stderr[-500:]}")
+        # Extract actual error lines (not encoding stats)
+        err_lines = [l for l in result.stderr.splitlines()
+                     if any(k in l.lower() for k in ["error", "invalid", "no such", "failed", "mismatch", "does not"])]
+        err_summary = "\n".join(err_lines[-10:]) if err_lines else result.stderr[:1000]
+        raise RuntimeError(f"Final concat failed:\n{err_summary}")
 
     # ── Mix background music + SFX ────────────────────────────────
     final_path = OUTPUT_DIR / "final_video.mp4"

@@ -16,7 +16,12 @@ for d in [DATA_DIR, OUTPUT_DIR, ASSETS_DIR, SCRIPTS_QUEUE_DIR, SCRIPTS_DONE_DIR]
     d.mkdir(parents=True, exist_ok=True)
 
 # ── API Keys ───────────────────────────────────────────────────────
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+# Support multiple API keys for load balancing (comma-separated)
+_multi_keys = os.environ.get("GEMINI_API_KEYS", "")
+GEMINI_API_KEYS = [k.strip() for k in _multi_keys.split(",") if k.strip()] if _multi_keys else []
+GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")  # single key fallback
+if not GEMINI_API_KEYS and GEMINI_API_KEY:
+    GEMINI_API_KEYS = [GEMINI_API_KEY]
 
 # ── Channel ────────────────────────────────────────────────────────
 CHANNEL_NAME = "CuriousAsian"
