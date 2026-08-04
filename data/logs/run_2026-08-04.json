@@ -1,0 +1,8 @@
+{
+  "started_at": "2026-08-04T03:29:59.922970",
+  "steps": {},
+  "status": "failed",
+  "skipped_scripts": [],
+  "error": "Invalid \\escape: line 3 column 277 (char 341)",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 145, in run_pipeline\n    script = get_next_script()\n             ^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/script_manager.py\", line 46, in get_next_script\n    return _generate_gemini_backup_script()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/script_manager.py\", line 115, in _generate_gemini_backup_script\n    script = json.loads(text)\n             ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/json/decoder.py\", line 337, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/json/decoder.py\", line 353, in raw_decode\n    obj, end = self.scan_once(s, idx)\n               ^^^^^^^^^^^^^^^^^^^^^^\njson.decoder.JSONDecodeError: Invalid \\escape: line 3 column 277 (char 341)\n"
+}
