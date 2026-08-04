@@ -26,11 +26,43 @@ def _prompt(scene):
     return f"{STICK_FIGURE_STYLE}{scene}"
 
 
+def _fit_to_hd(img: Image.Image) -> Image.Image:
+    """Resize image to 1920x1080 without stretching.
+
+    Scales to fill the frame, then center-crops to exact 16:9.
+    No black bars, no distortion.
+    """
+    target_w, target_h = VIDEO_WIDTH, VIDEO_HEIGHT
+    target_ratio = target_w / target_h  # 1.777...
+
+    w, h = img.size
+    img_ratio = w / h
+
+    if img_ratio > target_ratio:
+        # Image is wider — scale by height, crop sides
+        new_h = target_h
+        new_w = int(new_h * img_ratio)
+    else:
+        # Image is taller — scale by width, crop top/bottom
+        new_w = target_w
+        new_h = int(new_w / img_ratio)
+
+    img = img.resize((new_w, new_h), Image.LANCZOS)
+
+    # Center crop to exact target
+    left = (new_w - target_w) // 2
+    top = (new_h - target_h) // 2
+    img = img.crop((left, top, left + target_w, top + target_h))
+    return img
+
+
 def _try_imagen(prompt, output_path):
     """Try Google Imagen via Gemini API. Returns True on success."""
     try:
         from src.gemini_helper import generate_image
-        resp = generate_image(f"Simple stick figure cartoon: {prompt[:200]}")
+        resp = generate_image(
+            f"Wide 16:9 landscape illustration, simple stick figure cartoon: {prompt[:180]}"
+        )
         if not resp or not resp.candidates:
             return False
         for part in resp.candidates[0].content.parts:
@@ -38,8 +70,9 @@ def _try_imagen(prompt, output_path):
                 data = part.inline_data.data
                 raw = base64.b64decode(data) if isinstance(data, str) else data
                 output_path.write_bytes(raw)
-                img = Image.open(output_path)
-                img.resize((VIDEO_WIDTH, VIDEO_HEIGHT), Image.LANCZOS).save(output_path, "PNG")
+                img = Image.open(output_path).convert("RGB")
+                img = _fit_to_hd(img)
+                img.save(output_path, "PNG")
                 return True
     except Exception as e:
         print(f"    ⚠️  Imagen: {e}")
@@ -51,9 +84,10 @@ def _try_pollinations(prompt, output_path):
     try:
         from src.pollinations_helper import generate_pollinations_image
         generate_pollinations_image(_prompt(prompt), output_path, VIDEO_WIDTH, VIDEO_HEIGHT)
-        img = Image.open(output_path)
+        img = Image.open(output_path).convert("RGB")
         if img.size != (VIDEO_WIDTH, VIDEO_HEIGHT):
-            img.resize((VIDEO_WIDTH, VIDEO_HEIGHT), Image.LANCZOS).save(output_path, "PNG")
+            img = _fit_to_hd(img)
+        img.save(output_path, "PNG")
         return True
     except Exception as e:
         print(f"    ⚠️  Pollinations: {e}")

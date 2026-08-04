@@ -11,7 +11,7 @@ def generate_pollinations_image(prompt, output_path, width=1920, height=1080, se
     global _last_request
 
     encoded = urllib.parse.quote(prompt[:500], safe="")
-    params = f"width={width}&height={height}&nologo=true&safe=true&model=turbo"
+    params = f"width={width}&height={height}&nologo=true&safe=true&enhance=true"
     if seed:
         params += f"&seed={seed}"
     url = f"https://image.pollinations.ai/prompt/{encoded}?{params}"
