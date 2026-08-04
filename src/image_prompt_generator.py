@@ -1,7 +1,7 @@
 """Generates per-image prompts from narration — narrative-driven scene breaks.
 
-Instead of rigid 1-per-3s, Gemini decides how many scenes each section needs
-based on the story beats, topic shifts, and visual variety required.
+Gemini decides how many scenes each section needs based on story beats.
+All scenes use one recurring stick figure character (OverSimplified style).
 """
 
 import json
@@ -11,111 +11,65 @@ from src.gemini_helper import generate_text
 
 
 def _clean_json(text: str) -> str:
-    """Fix common Gemini JSON issues: trailing commas, single quotes, etc."""
-    # Remove trailing commas before } or ]
+    """Fix common Gemini JSON issues."""
     text = re.sub(r',\s*([}\]])', r'\1', text)
-    # Remove any BOM or invisible chars
     text = text.strip().strip('﻿')
     return text
 
 
-def _build_character_ref(script: dict) -> str:
-    """Build character reference block from script — supports both single
-    'character' (legacy) and 'characters' (array) formats."""
-    chars = []
+def generate_image_prompts(section: dict, duration: float) -> list[dict]:
+    """Break a narration section into scene prompts.
 
-    # New format: characters array
-    if "characters" in script:
-        chars = script["characters"]
-    # Legacy format: single character dict
-    elif "character" in script:
-        chars = [script["character"]]
-
-    if not chars:
-        return ""
-
-    lines = []
-    for i, char in enumerate(chars):
-        label = "PRIMARY" if i == 0 else f"SUPPORTING #{i}"
-        lines.append(
-            f"[{label}] Name: {char.get('name', 'Character')}. "
-            f"Appearance: {char.get('appearance', 'Simple cartoon character')}. "
-            f"Role: {char.get('role', 'Appears throughout the video')}."
-        )
-
-    return "\n".join(lines)
-
-
-def generate_image_prompts(section: dict, duration: float,
-                           character_ref: str = "") -> list[dict]:
-    """Break a narration section into narrative-driven image prompts.
-
-    Gemini decides how many images based on the story — topic shifts,
-    new characters entering, location changes, reveals, etc.
-    Rough guide: 1 image per 2-5 seconds, but story beats drive it.
-
-    Args:
-        section: Script section with 'narration' and 'visual_notes'
-        duration: Audio duration in seconds (for rough bounds)
-        character_ref: Character descriptions for consistency
-
-    Returns:
-        List of {image_prompt, key_phrase, duration_hint} dicts
+    One recurring stick figure character. Gemini decides scene breaks
+    based on story beats, topic shifts, and visual variety.
     """
-    # Bounds: 1 image per 3s (min) to 1 per 1s (max)
     min_images = max(1, int(duration / 3))
     max_images = max(min_images + 1, int(duration / 1))
 
-    char_block = ""
-    if character_ref:
-        char_block = f"""
-VIDEO CHARACTERS (must appear consistently — same outfit, features, proportions in EVERY image):
-{character_ref}
-Every character must look IDENTICAL each time they appear. Include their full description in every image prompt so the AI draws them the same way.
-"""
+    prompt = f"""You are a visual storyboard artist for a YouTube explainer channel.
 
-    prompt = f"""You are a visual storyboard artist for an educational YouTube channel.
-{char_block}
+VISUAL STYLE (MANDATORY for every scene):
+The channel uses ONE recurring character in EVERY scene:
+- Round white head, two dot eyes, straight line mouth
+- Messy brown hair, stick body, simple clothing
+- Like OverSimplified or Casually Explained YouTube channels
+- Thick black outlines, flat colors, NO gradients, NO shading
+- White or simple solid-color background
+- Objects/props around the character are simple but recognizable
+
 NARRATION TEXT:
 "{section['narration']}"
 
-VISUAL NOTES FROM SCRIPTWRITER:
+VISUAL NOTES:
 "{section.get('visual_notes', 'Match the narration content')}"
-
-ART STYLE: {IMAGE_STYLE}
 
 AUDIO DURATION: {duration:.1f} seconds
 
-Break this narration into visual scenes based on the STORY, not on a timer.
-Create a new scene when:
-- A new topic or concept is introduced
-- A character enters or exits
-- The location/setting changes
-- There's a dramatic reveal or twist
-- The mood shifts (funny → serious, etc.)
-- A comparison or contrast is being made (show both sides)
+Break this narration into visual scenes. Create a new scene when:
+- A new concept is introduced
+- The setting/context changes
+- There's a reveal or twist
+- A comparison is being made
 
-You need between {min_images} and {max_images} scenes.
+You need {min_images} to {max_images} scenes.
 
-For each scene, provide:
-- "image_prompt": SHORT prompt for AI image generation (MAX 200 characters). Describe only the scene and action. Do NOT repeat style instructions or full character descriptions — just say "a professor" not their full outfit. Keep it concise.
-- "key_phrase": A short punchy text overlay (3-8 words) — the key takeaway. Use original Asian terms with translation where relevant (e.g., "送钟 sòng zhōng = send to death")
-- "duration_hint": How many seconds this scene should stay on screen (based on how much narration it covers). All durations must sum to approximately {duration:.0f} seconds.
-- "narration_snippet": The first 10-15 words of the narration this scene covers (so we can sync timing).
+For each scene provide:
+- "image_prompt": SHORT description (MAX 150 chars) of what's in the scene. Always include "stick figure character" plus the objects/context around them. Do NOT repeat style instructions.
+- "key_phrase": Punchy text overlay (3-8 words) — the key takeaway for this moment.
+- "duration_hint": Seconds this scene stays on screen. Must sum to ~{duration:.0f}s.
+- "narration_snippet": First 10-15 words of narration this scene covers.
 
-Return ONLY a JSON array:
-[
-  {{"image_prompt": "...", "key_phrase": "...", "duration_hint": 3.5, "narration_snippet": "..."}},
-  ...
-]
+Example scene:
+{{"image_prompt": "stick figure character surrounded by mammoths and bison on orange background", "key_phrase": "10,000 Years Ago", "duration_hint": 3.5, "narration_snippet": "..."}}
 
-Return valid JSON only, no markdown formatting."""
+Return ONLY a JSON array, no markdown:
+[{{"image_prompt": "...", "key_phrase": "...", "duration_hint": 3.5, "narration_snippet": "..."}}, ...]"""
 
     raw = generate_text(prompt)
     if not raw:
         raise ValueError("Gemini returned empty response for image prompts")
+
     text = raw.strip()
-    # Strip markdown code fences
     if text.startswith("```"):
         text = text.split("\n", 1)[1]
         text = text.rsplit("```", 1)[0]
@@ -124,8 +78,7 @@ Return valid JSON only, no markdown formatting."""
     try:
         prompts = json.loads(text)
     except json.JSONDecodeError:
-        # Last resort: ask Gemini to fix its own JSON
-        fix_prompt = f"Fix this broken JSON array and return ONLY valid JSON, nothing else:\n{text}"
+        fix_prompt = f"Fix this broken JSON array and return ONLY valid JSON:\n{text}"
         fixed = generate_text(fix_prompt)
         if not fixed:
             raise
@@ -140,7 +93,7 @@ Return valid JSON only, no markdown formatting."""
     if len(prompts) < min_images:
         while len(prompts) < min_images:
             prompts.append({
-                "image_prompt": f"Simple cartoon illustration of: {section.get('visual_notes', 'a curious person thinking')}. {IMAGE_STYLE}",
+                "image_prompt": "stick figure character thinking with question mark above head",
                 "key_phrase": "",
                 "duration_hint": duration / min_images,
                 "narration_snippet": ""
@@ -148,7 +101,7 @@ Return valid JSON only, no markdown formatting."""
     elif len(prompts) > max_images:
         prompts = prompts[:max_images]
 
-    # Normalize durations so they sum to actual audio duration
+    # Normalize durations to match audio
     raw_total = sum(p.get("duration_hint", 3) for p in prompts)
     if raw_total > 0:
         scale = duration / raw_total
@@ -159,36 +112,14 @@ Return valid JSON only, no markdown formatting."""
 
 
 def generate_all_image_prompts(script: dict, audio_segments: list[dict]) -> list[dict]:
-    """Generate image prompts for the entire video.
-
-    Args:
-        script: Full script with sections
-        audio_segments: List of {duration, section_id, ...} from voice generator
-
-    Returns:
-        Flat list of image prompt dicts for every scene
-    """
-    # Build character reference (supports single or multi-character)
-    character_ref = _build_character_ref(script)
-
-    if character_ref:
-        chars = script.get("characters", [])
-        if not chars and "character" in script:
-            chars = [script["character"]]
-        names = [c.get("name", "unnamed") for c in chars]
-        print(f"  👤 Video characters: {', '.join(names)}")
-
+    """Generate image prompts for the entire video."""
     all_prompts = []
 
     for section, audio_seg in zip(script["sections"], audio_segments):
         duration = audio_seg["duration"]
+        section_prompts = generate_image_prompts(section, duration)
 
-        section_prompts = generate_image_prompts(
-            section, duration, character_ref=character_ref
-        )
-
-        num_scenes = len(section_prompts)
-        print(f"  🎨 {section['id']}: {duration:.1f}s → {num_scenes} scenes (narrative-driven)")
+        print(f"  🎨 {section['id']}: {duration:.1f}s → {len(section_prompts)} scenes")
 
         for i, p in enumerate(section_prompts):
             all_prompts.append({
@@ -202,5 +133,5 @@ def generate_all_image_prompts(script: dict, audio_segments: list[dict]) -> list
                 "global_index": len(all_prompts),
             })
 
-    print(f"  🎨 Total scenes: {len(all_prompts)} (narrative-driven)")
+    print(f"  🎨 Total scenes: {len(all_prompts)}")
     return all_prompts

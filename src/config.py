@@ -23,8 +23,8 @@ CHANNEL_NAME = "CuriousAsian"
 CHANNEL_TAGLINE = "Your grandma's rules, finally explained."
 
 # ── Voice ──────────────────────────────────────────────────────────
-VOICE_ENGINE = os.environ.get("VOICE_ENGINE", "gtts")  # "gtts" (default) or "edge-tts"
-EDGE_TTS_VOICE = os.environ.get("EDGE_TTS_VOICE", "en-US-GuyNeural")  # only used if edge-tts
+VOICE_ENGINE = os.environ.get("VOICE_ENGINE", "edge-tts")  # "edge-tts" (default) or "gtts"
+EDGE_TTS_VOICE = os.environ.get("EDGE_TTS_VOICE", "en-GB-ThomasNeural")
 
 # ── Video ──────────────────────────────────────────────────────────
 VIDEO_WIDTH = 1920
@@ -34,12 +34,12 @@ IMAGE_DURATION = 3  # seconds per image — 1 image every 3 seconds
 
 # ── Image style ────────────────────────────────────────────────────
 IMAGE_STYLE = (
-    "STYLE: Simple stick-figure webcomic, like OverSimplified or Casually Explained. "
-    "Round heads, dot eyes, simple line-art bodies, thick black outlines. "
-    "Muted earth-tone palette (beige, brown, tan, olive). Flat solid colors, "
-    "NO gradients, NO shading. Minimal detail — easy to understand at a glance. "
-    "Simple solid-color backgrounds. Characters are culturally appropriate "
-    "(clothing, features, setting) but ALL drawn as simple stick figures. "
+    "STYLE: Simple stick-figure cartoon like OverSimplified YouTube channel. "
+    "One recurring character: round white head, two dot eyes, straight line mouth, "
+    "messy brown hair, stick body with simple clothing. "
+    "Thick black outlines, flat solid colors, NO gradients, NO shading. "
+    "White or simple solid-color background. Objects around the character are "
+    "simple but recognizable (icons, props, animals). "
     "NO photorealism, NO 3D, NO text, NO watermarks."
 )
 

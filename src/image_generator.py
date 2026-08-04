@@ -1,54 +1,79 @@
-"""Image generation — Pollinations primary, Gemini fallback."""
+"""Image generation — Google Imagen primary, Pollinations fallback."""
 
 import base64
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from src.config import IMAGE_STYLE, VIDEO_WIDTH, VIDEO_HEIGHT, OUTPUT_DIR
-from src.pollinations_helper import generate_pollinations_image
 
 
 class ImageGenerationFailed(Exception):
     pass
 
 
+# Stick figure style prefix for all image prompts
+STICK_FIGURE_STYLE = (
+    "simple stick figure cartoon, OverSimplified style, "
+    "round white head, two dot eyes, straight line mouth, "
+    "messy brown hair, stick body, thick black outlines, "
+    "flat solid colors, NO photorealism, NO 3D, NO shading, NO gradients, "
+    "simple background. "
+)
+
+
 def _prompt(scene):
-    """Short style + scene for Pollinations URL."""
-    scene = scene[:200]
-    return (
-        "simple stick figure webcomic, OverSimplified style, "
-        "round heads, dot eyes, thick black outlines, "
-        "muted earth tones, flat solid colors, minimal detail, "
-        "NO photorealism, NO 3D, NO shading, NO gradients. "
-        f"{scene}"
-    )
+    """Build image prompt: stick figure style + scene description."""
+    scene = scene[:180]
+    return f"{STICK_FIGURE_STYLE}{scene}"
 
 
-def generate_single_image(prompt, output_path):
-    """Pollinations (3 tries) → Gemini (1 try) → fail."""
-
-    # Pollinations
-    for attempt in range(3):
-        try:
-            generate_pollinations_image(_prompt(prompt), output_path, VIDEO_WIDTH, VIDEO_HEIGHT)
-            img = Image.open(output_path)
-            if img.size != (VIDEO_WIDTH, VIDEO_HEIGHT):
-                img.resize((VIDEO_WIDTH, VIDEO_HEIGHT), Image.LANCZOS).save(output_path, "PNG")
-            return output_path
-        except Exception as e:
-            print(f"    ⚠️  Pollinations [{attempt+1}/3]: {e}")
-
-    # Gemini fallback
+def _try_imagen(prompt, output_path):
+    """Try Google Imagen via Gemini API. Returns True on success."""
     try:
-        from src.gemini_helper import generate_image as gem_img
-        resp = gem_img(f"Simple cartoon: {prompt[:200]}")
+        from src.gemini_helper import generate_image
+        resp = generate_image(f"Simple stick figure cartoon: {prompt[:200]}")
+        if not resp or not resp.candidates:
+            return False
         for part in resp.candidates[0].content.parts:
             if part.inline_data and part.inline_data.mime_type.startswith("image/"):
                 data = part.inline_data.data
-                output_path.write_bytes(base64.b64decode(data) if isinstance(data, str) else data)
-                Image.open(output_path).resize((VIDEO_WIDTH, VIDEO_HEIGHT), Image.LANCZOS).save(output_path, "PNG")
-                return output_path
+                raw = base64.b64decode(data) if isinstance(data, str) else data
+                output_path.write_bytes(raw)
+                img = Image.open(output_path)
+                img.resize((VIDEO_WIDTH, VIDEO_HEIGHT), Image.LANCZOS).save(output_path, "PNG")
+                return True
     except Exception as e:
-        print(f"    ⚠️  Gemini fallback: {e}")
+        print(f"    ⚠️  Imagen: {e}")
+    return False
+
+
+def _try_pollinations(prompt, output_path):
+    """Try Pollinations.ai. Returns True on success."""
+    try:
+        from src.pollinations_helper import generate_pollinations_image
+        generate_pollinations_image(_prompt(prompt), output_path, VIDEO_WIDTH, VIDEO_HEIGHT)
+        img = Image.open(output_path)
+        if img.size != (VIDEO_WIDTH, VIDEO_HEIGHT):
+            img.resize((VIDEO_WIDTH, VIDEO_HEIGHT), Image.LANCZOS).save(output_path, "PNG")
+        return True
+    except Exception as e:
+        print(f"    ⚠️  Pollinations: {e}")
+    return False
+
+
+def generate_single_image(prompt, output_path):
+    """Google Imagen (2 tries) → Pollinations (2 tries) → fail."""
+
+    # Google Imagen — primary
+    for attempt in range(2):
+        print(f"    🎨 Imagen [{attempt+1}/2]...")
+        if _try_imagen(prompt, output_path):
+            return output_path
+
+    # Pollinations — fallback
+    for attempt in range(2):
+        print(f"    🌐 Pollinations [{attempt+1}/2]...")
+        if _try_pollinations(prompt, output_path):
+            return output_path
 
     raise ImageGenerationFailed(f"All methods failed: {output_path.name}")
 
@@ -77,15 +102,16 @@ def generate_thumbnail(script):
     thumb = OUTPUT_DIR / "thumbnail.png"
     title = script["title"]
 
-    try:
-        generate_pollinations_image(
-            f"simple stick figure webcomic thumbnail, OverSimplified style, thick outlines, muted colors, {title[:100]}, surprised stick figure character, NO photorealism, NO 3D",
-            thumb, 1280, 720
-        )
-    except Exception:
-        # Fallback gradient
-        img = Image.new("RGB", (1280, 720), (30, 20, 60))
-        img.save(thumb, "PNG")
+    # Try Imagen first, then Pollinations
+    prompt = f"YouTube thumbnail, stick figure cartoon, vibrant, {title[:100]}, surprised stick figure character"
+    if not _try_imagen(prompt, thumb):
+        if not _try_pollinations(
+            f"stick figure YouTube thumbnail, thick outlines, vibrant, {title[:100]}, surprised character",
+            thumb
+        ):
+            # Fallback gradient
+            img = Image.new("RGB", (1280, 720), (30, 20, 60))
+            img.save(thumb, "PNG")
 
     # Title overlay
     img = Image.open(thumb).resize((1280, 720), Image.LANCZOS)
