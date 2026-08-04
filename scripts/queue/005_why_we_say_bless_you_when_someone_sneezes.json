@@ -1,0 +1,59 @@
+{
+  "title": "Why We Say 'Bless You' When Someone Sneezes",
+  "description": "You sneeze. A complete stranger says 'bless you.' You say 'thank you.' Neither of you thinks about it. But why? Why is sneezing the ONLY bodily function that gets a religious response?\n\nWe trace this from ancient Rome (where your soul literally escaped through your nose) to the Black Plague to modern psychology.\n\nThe twist: what happens when nobody says it will make you genuinely uncomfortable.\n\nWhat does your culture say when someone sneezes? Comment your version!",
+  "tags": ["culture", "traditions", "sneezing", "bless you", "history", "psychology", "CuriousAsian"],
+  "characters": [
+    {
+      "name": "Sam",
+      "appearance": "Mixed-race man in his late 20s, short curly dark brown hair, light brown skin, wearing a dark green hoodie and khaki pants, rectangular glasses, slightly awkward but endearing expression, tends to gesture a lot. Simple flat 2D cartoon, bold black outlines.",
+      "role": "The curious overthinker who can't stop analyzing everyday rituals — goes from amused to genuinely fascinated to uncomfortable"
+    },
+    {
+      "name": "Roman Marcus",
+      "appearance": "Ancient Roman citizen in white toga with red trim, olive skin, short curly dark hair with laurel wreath, sandals, dramatic gesturing hands, overly alarmed expression. Simple flat 2D cartoon, bold black outlines.",
+      "role": "The ancient explainer — appears in fear/origin sections, demonstrates the soul-expulsion panic with maximum drama"
+    },
+    {
+      "name": "Elevator Girl",
+      "appearance": "Young woman in her 20s, straight brown hair in a ponytail, wearing a light blue blouse and black pants, holding a coffee cup, looks like a normal office worker, friendly but reserved. Simple flat 2D cartoon, bold black outlines.",
+      "role": "The stranger connection — appears in hook and twist, represents the automatic kindness between strangers"
+    }
+  ],
+  "sections": [
+    {
+      "id": "hook",
+      "narration": "You sneeze. A complete stranger — someone who hasn't acknowledged your existence — immediately says bless you. You say thank you. They nod. Both of you move on. Except everything about that exchange is insane. You don't say bless you when someone coughs. Nobody blesses a burp. A yawn — the thing that's actually contagious — gets nothing. But a sneeze gets an immediate religious invocation from every stranger in earshot. No other bodily function has its own social protocol. No other reflex requires a verbal response from witnesses. Why is sneezing the only thing your body does that strangers feel obligated to comment on? The answer starts in ancient Rome, where they believed your soul was literally escaping through your nose. But the twist — what happens when nobody says bless you — is the part that will actually make you uncomfortable.",
+      "visual_notes": "Scene 1: Sam sneezing in an elevator — Elevator Girl and two others simultaneously say 'bless you!' without looking up. Scene 2: Same elevator — Sam coughing — absolute silence. Scene 3: Grid: cough (nothing), burp (nothing), yawn (nothing), sneeze (EVERYONE RESPONDS). Scene 4: Quick Roman Marcus flash — soul escaping through a nose — teasing what's coming."
+    },
+    {
+      "id": "fear",
+      "narration": "The Romans believed that during a sneeze, your soul could be expelled through your nose. Not metaphorically. Literally. For a split second, your spirit was loose and vulnerable. And in that window, a demon could slip into the empty space before your soul settled back in. A blessing wasn't politeness. It was emergency spiritual defense. You were performing a real-time exorcism to seal the gap. In medieval Europe, the fear got more specific. People believed the heart physically stopped during a sneeze — a momentary death. The blessing was prayer-powered CPR. Without it, the heart might not restart. And here's the detail that made all of this unkillable — you can't feel what your heart does during a sneeze. The reflex is so violent for that half-second that you genuinely cannot tell. You can't disprove the fear in real time. And anything you can't disprove in real time survives forever. But the moment this went from superstition to global policy was darker than soul-snatching demons.",
+      "visual_notes": "Scene 1: Roman Marcus sneezing — glowing soul expelled from nose, floating vulnerably. Scene 2: Dark spirit trying to sneak IN — Roman Marcus's friend shouting blessing, shield appears blocking spirit. Scene 3: Medieval person sneezing — heart icon stopping — someone blessing — heart restarting. Scene 4: Sam trying to feel his heartbeat mid-sneeze — can't tell — uncertainty on his face."
+    },
+    {
+      "id": "origin",
+      "narration": "590 AD. Pope Gregory the First. The Bubonic Plague is devastating Rome. People are dying in the streets. And one of the earliest symptoms before death — before the fever, before the buboes — was sneezing. When someone sneezed during the plague, it might be the last voluntary sound they ever made. Gregory issued a decree — God bless you for anyone who sneezed. A prayer for survival. A plea for protection. The phrase spread across Christian Europe within a generation. But here's what most people don't know. The practice is much older. The Greeks were saying bless you in 400 BC — nearly a thousand years before Gregory. The Romans had their soul theory. Hindu traditions had their own responses. Gregory didn't invent bless you. He just made it papal policy during the worst pandemic in European history. And a pandemic, it turns out, is the most effective marketing campaign a social ritual can get. But here's the question — if souls aren't escaping and the plague is over, why does literally everyone still do this?",
+      "visual_notes": "Scene 1: Pope Gregory in dark, plague-stricken Rome, issuing decree. Scene 2: Plague streets — someone sneezing, people frantically blessing them with genuine fear. Scene 3: Timeline going much further back — Greeks 400 BC, Romans, Hindus — all pre-Gregory. Scene 4: Sam — 'Gregory didn't invent it — he made it go viral during a pandemic.'"
+    },
+    {
+      "id": "science",
+      "narration": "A sneeze is your body ejecting irritants at up to 100 miles per hour. Your eyes close involuntarily — not because your eyeballs would pop out, that's a myth — but because the sneeze neural pathway also triggers eye closure. They're wired together. Your chest contracts. Your diaphragm spasms. It feels dramatic because it is — one of the most powerful reflexes you have. But your heart doesn't stop. Your brain doesn't shut down. Your soul stays put. So why do we still say bless you? Psychologists call it a social script — an automatic response so deeply embedded that you perform it without thinking. Like saying sorry when someone else bumps into you. Bless you isn't a blessing anymore. It's a social reflex. An involuntary response to someone else's involuntary response. Your mouth sneezes back. But wait — every culture on earth does this. And they all say something completely different. That shouldn't be possible unless there's something universal about sneezing that transcends language.",
+      "visual_notes": "Scene 1: Cross-section diagram — sneeze mechanism with arrows and airflow. Scene 2: Speedometer hitting 100 mph. Scene 3: Sam's brain — 'bless you' firing on autopilot, reflex arc diagram. Scene 4: Two arcs mirroring — body's sneeze reflex and society's 'bless you' reflex. Sam: 'it's a SOCIAL sneeze.'"
+    },
+    {
+      "id": "world",
+      "narration": "In German — Gesundheit — health. No religion. Very practical. In Arabic, it's a full exchange. The sneezer must first say Alhamdulillah. Only then does the witness respond with Yarhamukallah. Skip your part? Nobody owes you anything. In Hindi — Jeete Raho — live long. In Mandarin — 百岁 bǎi suì — live to a hundred. In Japan, there's no blessing at all. But there IS a belief that sneezing for no reason means someone's talking about you. One sneeze — praise. Two — criticism. Three — someone's in love with you. Four? You just have a cold. Every civilization felt compelled to respond to a sneeze. Not a cough. Not a hiccup. Only sneezes. They just couldn't agree on what to say. But here's the part nobody expected. Researchers actually tested what happens when you remove the response entirely. When nobody says anything. And the results are the twist I promised you.",
+      "visual_notes": "Scene 1: German person — 'Gesundheit!' with health icon. Scene 2: Arabic exchange — two-step protocol diagram. Scene 3: Japanese sneeze counter — 1 (praise), 2 (criticism), 3 (heart), 4 (tissue box). Scene 4: World map with responses popping up everywhere. Sam overwhelmed — then turning serious for the twist."
+    },
+    {
+      "id": "twist",
+      "narration": "Researchers studied what happens when someone sneezes and nobody says bless you. The results are weirdly consistent. People who sneezed in a group and received no acknowledgment reported feeling slightly ignored, less connected, and — this is the strange one — slightly embarrassed. Not because they believe the soul theory. But because the absence breaks a social contract they didn't know they'd signed. Think about this. In an elevator, you would never start a conversation with a stranger. You won't make eye contact. You definitely won't speak. But if they sneeze, you will speak to them. Immediately. Without hesitation. Without thinking. The sneeze is a universal social unlock. It gives complete strangers permission to acknowledge each other's existence for exactly one exchange. Bless you is the password. And when nobody says it, people feel — measurably, documentably — more alone. In a world where people avoid eye contact on transit, bless you might be the last automatic act of kindness between strangers that hasn't been optimized away.",
+      "visual_notes": "Scene 1: Sam sneezing in quiet office — nobody responds — his face falls slightly, feeling invisible. Scene 2: Same scene — Elevator Girl says 'bless you' — warm connection line appears between them, Sam smiles. Scene 3: Elevator — strangers in silence, sneeze breaks the barrier, everyone connects for one second. Scene 4: 'Bless you' visualized as the last thread of automatic stranger kindness — other threads already cut."
+    },
+    {
+      "id": "verdict",
+      "narration": "Your soul isn't going anywhere. The plague is over. Your heart keeps beating. Every original reason for saying bless you has been debunked. But we keep saying it — billions of people, every day, dozens of languages. The tradition survived not because the fear was real, but because the kindness was. Bless you started as spiritual panic, became plague-era desperation, and evolved into something its inventors never intended — a tiny, involuntary act of human connection. A reflex that proves strangers still notice each other. In a world where people wear headphones to avoid conversation, bless you is proof that someone heard you. Someone noticed. Someone cared enough to speak. You don't need the blessing. But you need the acknowledgment. And that — the only part that actually matters — has nothing to do with your nose.",
+      "visual_notes": "Scene 1: Debunked reasons crossed out — soul, plague, heart. Scene 2: What remains — one person acknowledging another. Sam and Elevator Girl, simple connection. Scene 3: Montage — German, Arabic, Japanese, Chinese characters all saying their version — connected across world map. Scene 4: Sam walking through crowd, hears sneeze, says 'bless you' without thinking, smiles — tagline: 'Your grandma's rules, finally explained.'"
+    }
+  ]
+}
