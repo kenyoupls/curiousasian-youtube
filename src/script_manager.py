@@ -26,23 +26,38 @@ def is_queue_low() -> bool:
 
 
 def get_next_script() -> dict:
-    """Get the next script from queue, or generate one with Gemini."""
+    """Get the next script from queue, or generate one with Gemini.
+
+    NOTE: Script stays in queue until mark_script_done() is called after
+    successful pipeline completion. This prevents losing scripts on failure.
+    """
     scripts = sorted(SCRIPTS_QUEUE_DIR.glob("*.json"))
 
     if scripts:
         script_path = scripts[0]
         script = json.loads(script_path.read_text())
-        done_path = SCRIPTS_DONE_DIR / script_path.name
-        shutil.move(str(script_path), str(done_path))
 
-        remaining = get_queue_count()
+        remaining = get_queue_count() - 1  # excluding current
         print(f"📝 Using script: {script.get('title', script_path.stem)}")
         print(f"   Scripts remaining: {remaining}")
         script["_source"] = "claude"
+        script["_queue_path"] = str(script_path)  # for mark_script_done()
         return script
     else:
         print("⚠️  Script queue EMPTY — generating with Gemini backup...")
         return _generate_gemini_backup_script()
+
+
+def mark_script_done(script: dict):
+    """Move script from queue to done. Call ONLY after pipeline succeeds."""
+    queue_path = script.get("_queue_path")
+    if not queue_path:
+        return
+    queue_path = Path(queue_path)
+    if queue_path.exists():
+        done_path = SCRIPTS_DONE_DIR / queue_path.name
+        shutil.move(str(queue_path), str(done_path))
+        print(f"   ✅ Script moved to done: {queue_path.name}")
 
 
 def _generate_gemini_backup_script() -> dict:

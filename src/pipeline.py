@@ -15,7 +15,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.config import OUTPUT_DIR, DATA_DIR
-from src.script_manager import get_next_script, is_queue_low, get_queue_count
+from src.script_manager import get_next_script, mark_script_done, is_queue_low, get_queue_count
 from src.voice_generator import generate_all_audio
 from src.image_prompt_generator import generate_all_image_prompts
 from src.image_generator import generate_all_images, generate_thumbnail, ImageGenerationFailed
@@ -163,6 +163,9 @@ def run_pipeline():
                 f"All {MAX_SCRIPT_RETRIES} scripts failed image generation. "
                 f"Skipped: {[s['title'] for s in run_log['skipped_scripts']]}"
             )
+
+        # ── Move script to done (only on success) ──────────────────
+        mark_script_done(script)
 
         # ── Done ───────────────────────────────────────────────────
         run_log["status"] = "success"

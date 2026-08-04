@@ -11,6 +11,17 @@ _image_model = None
 _key_index = 0
 
 
+def _log_key_info():
+    """Print diagnostic info about keys (once)."""
+    global _logged
+    if not hasattr(_log_key_info, '_done'):
+        _log_key_info._done = True
+        n = len(GEMINI_API_KEYS)
+        prefixes = [k[:6] + "..." for k in GEMINI_API_KEYS] if GEMINI_API_KEYS else ["(none)"]
+        print(f"    🔑 {n} API key(s): {', '.join(prefixes)}")
+        print(f"    📦 google-genai version: {genai.__version__ if hasattr(genai, '__version__') else 'unknown'}")
+
+
 def _next_client():
     """Rotate to the next API key and return a new client."""
     global _key_index
@@ -38,11 +49,11 @@ def _is_auth_error(err_str):
 def generate_text(prompt):
     """Try each text model with key rotation, 3 rounds with exponential backoff."""
     global _text_model
+    _log_key_info()
     last_err = None
 
     for rnd in range(1, 4):
         for model in _ordered(GEMINI_TEXT_MODELS, _text_model):
-            # Try each available key for this model
             keys_tried = 0
             while keys_tried < max(len(GEMINI_API_KEYS), 1):
                 client = _next_client()
@@ -50,7 +61,7 @@ def generate_text(prompt):
                 try:
                     result = client.models.generate_content(model=model, contents=prompt).text
                     if result is None:
-                        break  # try next model
+                        break
                     _text_model = model
                     if rnd == 1:
                         print(f"    ✅ Text: {model}")
@@ -59,16 +70,18 @@ def generate_text(prompt):
                     err = str(e)
                     last_err = err
                     if _is_auth_error(err):
-                        print(f"    ⚠️  Key auth failed, trying next key...")
-                        continue  # try next key
+                        key_prefix = GEMINI_API_KEYS[(_key_index - 1) % len(GEMINI_API_KEYS)][:8] if GEMINI_API_KEYS else "?"
+                        print(f"    ⚠️  Key {key_prefix}... auth failed on {model}, trying next...")
+                        continue
                     elif _is_overloaded(err):
                         wait = (2 ** rnd) + random.uniform(0, 1)
                         print(f"    ⚠️  {model} overloaded [{rnd}/3], waiting {wait:.0f}s...")
                         time.sleep(wait)
-                        break  # try next model after wait
+                        break
                     elif "404" in err:
-                        break  # model not found, try next model
+                        break
                     else:
+                        print(f"    ❌ {model} unexpected error: {err[:200]}")
                         raise
 
     raise RuntimeError(f"All Gemini text models failed: {last_err[:200] if last_err else 'unknown'}")
@@ -77,6 +90,7 @@ def generate_text(prompt):
 def generate_image(prompt):
     """Try image models with key rotation, 4 rounds with exponential backoff."""
     global _image_model
+    _log_key_info()
     last_err = None
 
     for rnd in range(1, 5):
@@ -98,7 +112,8 @@ def generate_image(prompt):
                     err = str(e)
                     last_err = err
                     if _is_auth_error(err):
-                        print(f"    ⚠️  Key auth failed, trying next key...")
+                        key_prefix = GEMINI_API_KEYS[(_key_index - 1) % len(GEMINI_API_KEYS)][:8] if GEMINI_API_KEYS else "?"
+                        print(f"    ⚠️  Key {key_prefix}... auth failed on {model}, trying next...")
                         continue
                     elif _is_overloaded(err):
                         wait = (2 ** rnd) + random.uniform(0, 1)
