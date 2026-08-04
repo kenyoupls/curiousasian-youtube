@@ -23,8 +23,13 @@ def generate_image_prompts(section: dict, duration: float) -> list[dict]:
     One recurring stick figure character. Gemini decides scene breaks
     based on story beats, topic shifts, and visual variety.
     """
-    min_images = max(1, int(duration / 3))
-    max_images = max(min_images + 1, int(duration / 1))
+    # Short sections (under 10s) = 1 image. Longer = 1 per 5 seconds.
+    if duration <= 10:
+        min_images = 1
+        max_images = 1
+    else:
+        min_images = max(1, int(duration / 5))
+        max_images = max(min_images, int(duration / 3))
 
     prompt = f"""You are a visual storyboard artist for a YouTube explainer channel.
 
