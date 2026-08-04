@@ -38,7 +38,7 @@ CHANNEL_TAGLINE = "Your grandma's rules, finally explained."
 VIDEO_WIDTH = 1920
 VIDEO_HEIGHT = 1080
 VIDEO_FPS = 30
-IMAGE_DURATION = 3  # seconds per image — 1 image every 3 seconds
+IMAGE_DURATION = 4  # seconds per image — fits within 20 RPD Gemini limit
 
 # ── Image style ────────────────────────────────────────────────────
 IMAGE_STYLE = (
@@ -53,13 +53,11 @@ IMAGE_STYLE = (
 
 # ── Gemini models (fallback order — tries each until one works) ────
 GEMINI_TEXT_MODELS = [
-    "gemini-3.6-flash",           # current free-tier model
-    "gemini-3.5-flash",           # fallback
-    "gemini-3.5-flash-lite",      # lite fallback
+    "gemini-3.5-flash-lite",      # 500 RPD — most generous free tier
+    "gemini-3.6-flash",           # fallback
 ]
 GEMINI_IMAGE_MODELS = [
-    "gemini-3.6-flash",           # current free-tier model with image generation
-    "gemini-3.5-flash",           # fallback
+    "gemini-3.6-flash",           # 20 RPD — best quality free image model
 ]
 # Primary (first in list) — used by default
 GEMINI_TEXT_MODEL = GEMINI_TEXT_MODELS[0]
