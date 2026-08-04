@@ -17,11 +17,14 @@ for d in [DATA_DIR, OUTPUT_DIR, ASSETS_DIR, SCRIPTS_QUEUE_DIR, SCRIPTS_DONE_DIR]
 
 # ── API Keys ───────────────────────────────────────────────────────
 # Support multiple API keys for load balancing (comma-separated)
+# Merges both GEMINI_API_KEY (single) and GEMINI_API_KEYS (multi), deduped
+_single_key = os.environ.get("GEMINI_API_KEY", "").strip()
 _multi_keys = os.environ.get("GEMINI_API_KEYS", "")
-GEMINI_API_KEYS = [k.strip() for k in _multi_keys.split(",") if k.strip()] if _multi_keys else []
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")  # single key fallback
-if not GEMINI_API_KEYS and GEMINI_API_KEY:
-    GEMINI_API_KEYS = [GEMINI_API_KEY]
+_all_keys = [k.strip() for k in _multi_keys.split(",") if k.strip()] if _multi_keys else []
+if _single_key and _single_key not in _all_keys:
+    _all_keys.insert(0, _single_key)  # original key first
+GEMINI_API_KEYS = _all_keys
+GEMINI_API_KEY = _single_key or (_all_keys[0] if _all_keys else "")
 
 # ── Channel ────────────────────────────────────────────────────────
 CHANNEL_NAME = "CuriousAsian"
