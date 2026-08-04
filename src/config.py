@@ -53,13 +53,13 @@ IMAGE_STYLE = (
 
 # ── Gemini models (fallback order — tries each until one works) ────
 GEMINI_TEXT_MODELS = [
-    "gemini-2.5-flash-lite",      # oldest, least demand
-    "gemini-3.5-flash-lite",      # lite = less demand
-    "gemini-3.5-flash",
-    "gemini-3.6-flash",
+    "gemini-3.6-flash",           # current free-tier model
+    "gemini-3.5-flash",           # fallback
+    "gemini-3.5-flash-lite",      # lite fallback
 ]
 GEMINI_IMAGE_MODELS = [
-    "gemini-2.5-flash-image",     # only free image model (~500/day at 1024x1024)
+    "gemini-3.6-flash",           # current free-tier model with image generation
+    "gemini-3.5-flash",           # fallback
 ]
 # Primary (first in list) — used by default
 GEMINI_TEXT_MODEL = GEMINI_TEXT_MODELS[0]
