@@ -15,10 +15,11 @@ def _prompt(scene):
     """Short style + scene for Pollinations URL."""
     scene = scene[:200]
     return (
-        "simple flat vector illustration, Kurzgesagt style, "
-        "2D cartoon, bold black outlines, solid flat colors, NO gradients, "
-        "NO photorealism, NO 3D rendering, NO realistic shading, "
-        f"clean minimal background. {scene}"
+        "simple stick figure webcomic, OverSimplified style, "
+        "round heads, dot eyes, thick black outlines, "
+        "muted earth tones, flat solid colors, minimal detail, "
+        "NO photorealism, NO 3D, NO shading, NO gradients. "
+        f"{scene}"
     )
 
 
@@ -78,7 +79,7 @@ def generate_thumbnail(script):
 
     try:
         generate_pollinations_image(
-            f"flat 2D cartoon YouTube thumbnail, bold outlines, solid colors, vibrant, {title[:100]}, surprised cartoon character, Kurzgesagt style, NO photorealism",
+            f"simple stick figure webcomic thumbnail, OverSimplified style, thick outlines, muted colors, {title[:100]}, surprised stick figure character, NO photorealism, NO 3D",
             thumb, 1280, 720
         )
     except Exception:

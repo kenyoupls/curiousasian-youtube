@@ -34,13 +34,13 @@ IMAGE_DURATION = 3  # seconds per image — 1 image every 3 seconds
 
 # ── Image style ────────────────────────────────────────────────────
 IMAGE_STYLE = (
-    "STYLE: Simple 2D cartoon, flat illustration, bold black outlines, "
-    "solid colors (no gradients), round heads, dot eyes, simple expressions. "
-    "Clean white or solid-color background. Minimal detail — easy to understand "
-    "at a glance. Consistent Kurzgesagt-lite / explainer video aesthetic. "
-    "Characters are culturally appropriate to the topic (clothing, features, setting) "
-    "but ALL drawn in this same flat cartoon style. "
-    "NO photorealism, NO 3D, NO text, NO watermarks, NO complex shading."
+    "STYLE: Simple stick-figure webcomic, like OverSimplified or Casually Explained. "
+    "Round heads, dot eyes, simple line-art bodies, thick black outlines. "
+    "Muted earth-tone palette (beige, brown, tan, olive). Flat solid colors, "
+    "NO gradients, NO shading. Minimal detail — easy to understand at a glance. "
+    "Simple solid-color backgrounds. Characters are culturally appropriate "
+    "(clothing, features, setting) but ALL drawn as simple stick figures. "
+    "NO photorealism, NO 3D, NO text, NO watermarks."
 )
 
 # ── Gemini models (fallback order — tries each until one works) ────
