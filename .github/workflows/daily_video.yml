@@ -64,8 +64,13 @@ jobs:
           git config user.email "bot@curiosasian.com"
           git add scripts/ data/
           git diff --cached --quiet || git commit -m "Pipeline run [$(date +%Y-%m-%d)]"
-          git pull --rebase || true
-          git push
+          # Pull with rebase; on conflict, accept ours (pipeline data is fresher)
+          if ! git pull --rebase; then
+            git checkout --theirs . 2>/dev/null || true
+            git add -A
+            git rebase --continue --no-edit || git rebase --skip
+          fi
+          git push || echo "⚠️ Push failed — changes will be included in next run"
 
       - name: Clean up output files
         if: always()
