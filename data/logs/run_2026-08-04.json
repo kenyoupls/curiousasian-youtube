@@ -1,8 +1,18 @@
 {
-  "started_at": "2026-08-04T10:23:47.532518",
-  "steps": {},
+  "started_at": "2026-08-04T10:37:17.906034",
+  "steps": {
+    "script": {
+      "title": "Why Asians Never Wear Shoes Inside",
+      "source": "claude",
+      "sections": 10
+    },
+    "audio": {
+      "segments": 10,
+      "total_seconds": 109.2
+    }
+  },
   "status": "failed",
   "skipped_scripts": [],
   "error": "All Gemini text models failed: 401 UNAUTHENTICATED. {'error': {'code': 401, 'message': 'Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https",
-  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 145, in run_pipeline\n    script = get_next_script()\n             ^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/script_manager.py\", line 45, in get_next_script\n    return _generate_gemini_backup_script()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/script_manager.py\", line 123, in _generate_gemini_backup_script\n    raw = generate_text(prompt)\n          ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/gemini_helper.py\", line 74, in generate_text\n    raise RuntimeError(f\"All Gemini text models failed: {last_err[:200] if last_err else 'unknown'}\")\nRuntimeError: All Gemini text models failed: 401 UNAUTHENTICATED. {'error': {'code': 401, 'message': 'Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https\n"
+  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 148, in run_pipeline\n    result = _build_video_from_script(script, run_log)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 73, in _build_video_from_script\n    image_prompts = generate_all_image_prompts(script, audio_segments)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/image_prompt_generator.py\", line 125, in generate_all_image_prompts\n    section_prompts = generate_image_prompts(section, duration)\n                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/image_prompt_generator.py\", line 73, in generate_image_prompts\n    raw = generate_text(prompt)\n          ^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/gemini_helper.py\", line 87, in generate_text\n    raise RuntimeError(f\"All Gemini text models failed: {last_err[:200] if last_err else 'unknown'}\")\nRuntimeError: All Gemini text models failed: 401 UNAUTHENTICATED. {'error': {'code': 401, 'message': 'Request had invalid authentication credentials. Expected OAuth 2 access token, login cookie or other valid authentication credential. See https\n"
 }
