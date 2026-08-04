@@ -322,7 +322,7 @@ def build_video(script: dict, image_paths: list[Path],
         cmd = [
             "ffmpeg", "-y",
             "-i", str(silent_vid), "-i", str(audio_seg["path"]),
-            "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-shortest",
+            "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2", "-shortest",
             str(section_vid)
         ]
         merge_result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
@@ -363,7 +363,7 @@ def build_video(script: dict, image_paths: list[Path],
         "ffmpeg", "-y",
         "-f", "concat", "-safe", "0", "-i", str(concat_file),
         "-c:v", "libx264", "-preset", "medium", "-crf", "23",
-        "-c:a", "aac", "-b:a", "192k",
+        "-c:a", "aac", "-b:a", "192k", "-ar", "44100", "-ac", "2",
         "-movflags", "+faststart", "-pix_fmt", "yuv420p",
         str(video_no_music)
     ]
