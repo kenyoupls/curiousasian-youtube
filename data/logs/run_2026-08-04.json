@@ -1,18 +1,18 @@
 {
-  "started_at": "2026-08-04T03:34:36.308729",
+  "started_at": "2026-08-04T03:37:53.224471",
   "steps": {
     "script": {
-      "title": "Why Chinese Never Point at the Moon",
+      "title": "Why You Never Whistle at Night in Southeast Asia",
       "source": "claude",
       "sections": 7
     },
     "audio": {
       "segments": 7,
-      "total_seconds": 468.3
+      "total_seconds": 498.1
     }
   },
   "status": "failed",
   "skipped_scripts": [],
-  "error": "'NoneType' object has no attribute 'strip'",
-  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 148, in run_pipeline\n    result = _build_video_from_script(script, run_log)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 73, in _build_video_from_script\n    image_prompts = generate_all_image_prompts(script, audio_segments)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/image_prompt_generator.py\", line 158, in generate_all_image_prompts\n    section_prompts = generate_image_prompts(\n                      ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/image_prompt_generator.py\", line 104, in generate_image_prompts\n    text = generate_text(prompt).strip()\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAttributeError: 'NoneType' object has no attribute 'strip'\n"
+  "error": "Expecting property name enclosed in double quotes: line 7 column 3 (char 524)",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 148, in run_pipeline\n    result = _build_video_from_script(script, run_log)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 73, in _build_video_from_script\n    image_prompts = generate_all_image_prompts(script, audio_segments)\n                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/image_prompt_generator.py\", line 161, in generate_all_image_prompts\n    section_prompts = generate_image_prompts(\n                      ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/image_prompt_generator.py\", line 112, in generate_image_prompts\n    prompts = json.loads(text)\n              ^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/json/__init__.py\", line 346, in loads\n    return _default_decoder.decode(s)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/json/decoder.py\", line 337, in decode\n    obj, end = self.raw_decode(s, idx=_w(s, 0).end())\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/hostedtoolcache/Python/3.11.15/x64/lib/python3.11/json/decoder.py\", line 353, in raw_decode\n    obj, end = self.scan_once(s, idx)\n               ^^^^^^^^^^^^^^^^^^^^^^\njson.decoder.JSONDecodeError: Expecting property name enclosed in double quotes: line 7 column 3 (char 524)\n"
 }
