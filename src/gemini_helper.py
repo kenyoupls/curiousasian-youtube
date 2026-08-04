@@ -1,6 +1,7 @@
-"""Gemini API — model fallback with sticky selection."""
+"""Gemini API — model fallback with sticky selection + exponential backoff."""
 
 import time
+import random
 from google import genai
 from google.genai import types
 from src.config import GEMINI_API_KEY, GEMINI_TEXT_MODELS, GEMINI_IMAGE_MODELS
@@ -19,8 +20,12 @@ def _ordered(models, sticky):
     return models
 
 
+def _is_overloaded(err_str):
+    return any(code in err_str for code in ["503", "429", "RESOURCE_EXHAUSTED", "overloaded"])
+
+
 def generate_text(prompt):
-    """Try each text model, 3 rounds max. Returns string."""
+    """Try each text model, 3 rounds with exponential backoff."""
     global _text_model
     client = _client()
 
@@ -36,9 +41,10 @@ def generate_text(prompt):
                 return result
             except Exception as e:
                 err = str(e)
-                if "503" in err or "429" in err:
-                    print(f"    ⚠️  {model} overloaded [{rnd}/3]")
-                    time.sleep(5)
+                if _is_overloaded(err):
+                    wait = (2 ** rnd) + random.uniform(0, 1)
+                    print(f"    ⚠️  {model} overloaded [{rnd}/3], waiting {wait:.0f}s...")
+                    time.sleep(wait)
                 elif "404" in err:
                     continue
                 else:
@@ -48,27 +54,43 @@ def generate_text(prompt):
 
 
 def generate_image(prompt):
-    """Try each image model, 3 rounds max. Returns response object."""
+    """Try each image model, 4 rounds with exponential backoff."""
     global _image_model
     client = _client()
 
-    for rnd in range(1, 4):
+    for rnd in range(1, 5):
         for model in _ordered(GEMINI_IMAGE_MODELS, _image_model):
             try:
-                resp = client.models.generate_content(
-                    model=model, contents=prompt,
-                    config=types.GenerateContentConfig(response_modalities=["IMAGE", "TEXT"])
-                )
-                _image_model = model
-                return resp
+                # imagen-3 uses a different API than gemini image models
+                if model.startswith("imagen"):
+                    resp = client.models.generate_images(
+                        model=model,
+                        prompt=prompt,
+                        config=types.GenerateImagesConfig(
+                            number_of_images=1,
+                        )
+                    )
+                    _image_model = model
+                    return resp
+                else:
+                    resp = client.models.generate_content(
+                        model=model, contents=prompt,
+                        config=types.GenerateContentConfig(
+                            response_modalities=["IMAGE", "TEXT"]
+                        )
+                    )
+                    _image_model = model
+                    return resp
             except Exception as e:
                 err = str(e)
-                if "503" in err or "429" in err:
-                    print(f"    ⚠️  {model} overloaded [{rnd}/3]")
-                    time.sleep(5)
+                if _is_overloaded(err):
+                    wait = (2 ** rnd) + random.uniform(0, 1)
+                    print(f"    ⚠️  {model} overloaded [{rnd}/4], waiting {wait:.0f}s...")
+                    time.sleep(wait)
                 elif "404" in err:
                     continue
                 else:
-                    raise
+                    print(f"    ⚠️  {model} error: {err[:100]}")
+                    continue
 
     raise RuntimeError("All Gemini image models failed")

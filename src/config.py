@@ -51,8 +51,8 @@ GEMINI_TEXT_MODELS = [
     "gemini-3.6-flash",
 ]
 GEMINI_IMAGE_MODELS = [
-    "gemini-2.5-flash-image",     # oldest, least demand
-    "gemini-3.1-flash-lite-image",
+    "imagen-3.0-generate-002",    # dedicated image pipeline, most stable
+    "gemini-2.5-flash-image",
     "gemini-3.1-flash-image",
     "gemini-3-pro-image",
 ]

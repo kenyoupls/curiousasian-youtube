@@ -57,23 +57,40 @@ def _fit_to_hd(img: Image.Image) -> Image.Image:
 
 
 def _try_imagen(prompt, output_path):
-    """Try Google Imagen via Gemini API. Returns True on success."""
+    """Try Google Imagen via Gemini API. Returns True on success.
+
+    Handles both imagen-3 (generate_images) and gemini image models
+    (generate_content) response formats.
+    """
     try:
         from src.gemini_helper import generate_image
-        resp = generate_image(
-            f"Wide 16:9 landscape illustration, simple stick figure cartoon: {prompt[:180]}"
-        )
-        if not resp or not resp.candidates:
+        full_prompt = f"Wide 16:9 landscape illustration, simple stick figure cartoon: {prompt[:180]}"
+        resp = generate_image(full_prompt)
+        if not resp:
             return False
-        for part in resp.candidates[0].content.parts:
-            if part.inline_data and part.inline_data.mime_type.startswith("image/"):
-                data = part.inline_data.data
-                raw = base64.b64decode(data) if isinstance(data, str) else data
-                output_path.write_bytes(raw)
-                img = Image.open(output_path).convert("RGB")
-                img = _fit_to_hd(img)
-                img.save(output_path, "PNG")
-                return True
+
+        # imagen-3 response format: resp.generated_images[].image.image_bytes
+        if hasattr(resp, 'generated_images') and resp.generated_images:
+            img_data = resp.generated_images[0].image.image_bytes
+            if isinstance(img_data, str):
+                img_data = base64.b64decode(img_data)
+            output_path.write_bytes(img_data)
+            img = Image.open(output_path).convert("RGB")
+            img = _fit_to_hd(img)
+            img.save(output_path, "PNG")
+            return True
+
+        # gemini image model response format: resp.candidates[].content.parts[].inline_data
+        if hasattr(resp, 'candidates') and resp.candidates:
+            for part in resp.candidates[0].content.parts:
+                if part.inline_data and part.inline_data.mime_type.startswith("image/"):
+                    data = part.inline_data.data
+                    raw = base64.b64decode(data) if isinstance(data, str) else data
+                    output_path.write_bytes(raw)
+                    img = Image.open(output_path).convert("RGB")
+                    img = _fit_to_hd(img)
+                    img.save(output_path, "PNG")
+                    return True
     except Exception as e:
         print(f"    ⚠️  Imagen: {e}")
     return False
