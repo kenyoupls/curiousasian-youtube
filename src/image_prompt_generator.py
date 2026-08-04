@@ -98,7 +98,7 @@ Create a new scene when:
 You need between {min_images} and {max_images} scenes.
 
 For each scene, provide:
-- "image_prompt": A detailed prompt for AI image generation. ALWAYS include the full character description for any character in the scene. Describe scene, action, colors, mood — all in the flat cartoon style.
+- "image_prompt": SHORT prompt for AI image generation (MAX 200 characters). Describe only the scene and action. Do NOT repeat style instructions or full character descriptions — just say "a professor" not their full outfit. Keep it concise.
 - "key_phrase": A short punchy text overlay (3-8 words) — the key takeaway. Use original Asian terms with translation where relevant (e.g., "送钟 sòng zhōng = send to death")
 - "duration_hint": How many seconds this scene should stay on screen (based on how much narration it covers). All durations must sum to approximately {duration:.0f} seconds.
 - "narration_snippet": The first 10-15 words of the narration this scene covers (so we can sync timing).

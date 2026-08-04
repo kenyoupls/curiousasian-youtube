@@ -24,14 +24,18 @@ class ImageGenerationFailed(Exception):
 
 
 def _build_pollinations_prompt(scene_prompt: str) -> str:
-    """Build a Pollinations-friendly prompt with style instructions."""
-    return (
-        f"Simple 2D cartoon, flat illustration, bold black outlines, "
-        f"solid colors, round heads, dot eyes, simple expressions, "
-        f"clean white background, minimal detail, explainer video style. "
-        f"NO text, NO watermarks. "
-        f"Scene: {scene_prompt}"
-    )
+    """Build a short Pollinations-friendly prompt (URL length limit)."""
+    # Truncate scene prompt to keep total URL reasonable (~500 chars max)
+    style = "flat 2D cartoon, bold outlines, solid colors, simple, white background"
+    # Strip any existing style instructions from the scene prompt
+    scene = scene_prompt
+    for phrase in ["Simple flat 2D cartoon,", "bold black outlines,", "solid colors."]:
+        scene = scene.replace(phrase, "")
+    scene = scene.strip()
+    # Truncate to ~300 chars to keep URL under limits
+    if len(scene) > 300:
+        scene = scene[:297] + "..."
+    return f"{style}. {scene}"
 
 
 def generate_single_image(prompt: str, output_path: Path, max_retries: int = 5) -> Path:
