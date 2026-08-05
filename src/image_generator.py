@@ -1,117 +1,146 @@
-"""Image generation — Cloudflare FLUX.1 Schnell (primary) + SDXL Lightning (fallback).
+"""Image generation — Cloudflare FLUX.1 Schnell only (consistent cartoon style).
 
-Free tier: 10,000 neurons/day.
-FLUX Schnell: ~50 neurons/image → ~200 images/day (higher quality)
-SDXL Lightning: ~30 neurons/image → ~300 images/day (lower quality fallback)
+On NSFW block: Gemini rewrites the prompt → retry FLUX. No SDXL fallback.
+All images use the same locked style template for channel-wide consistency.
+
+Free tier: 10,000 neurons/day → ~200 images/day.
 """
 
+import re
 import base64
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-from src.config import IMAGE_STYLE, VIDEO_WIDTH, VIDEO_HEIGHT, OUTPUT_DIR
+from src.config import VIDEO_WIDTH, VIDEO_HEIGHT, OUTPUT_DIR
 
 
 class ImageGenerationFailed(Exception):
     pass
 
 
-# ── Prompt template (locked — matches successful flux_test4 framing) ──
-# FLUX schnell works best with natural language, no weight syntax
-FLUX_PROMPT_TEMPLATE = (
-    "cartoon character in center of white background, "
-    "character takes up 60 percent of frame height, "
-    "flat 2D cartoon boy with round eyes {scene}, "
-    "thick black outlines, solid flat colors, pure white background, "
-    "clean negative space around edges, simple minimalist composition"
-)
-
-# ── SDXL fallback prompt (weight syntax, style-first) ─────────────────
-SDXL_STYLE_PREFIX = (
-    "(flat 2D cartoon, thick black outlines, solid colors, "
-    "white background, wide landscape:1.2)"
-)
-SDXL_CHARACTER_TAG = "simple stick figure with round head and dot eyes"
-
-SDXL_NEGATIVE_PROMPT = (
-    "(photorealistic, 3D render, anime, shading, gradients, "
-    "blurry, watermark, text, close-up, portrait:1.4)"
+# ── Locked style template ────────────────────────────────────────────
+# Consistent cartoon style across the ENTIRE channel.
+# {scene} is the ONLY variable — everything else is fixed.
+FLUX_STYLE_TEMPLATE = (
+    "flat 2D cartoon illustration, thick black outlines, solid flat colors, "
+    "simple minimalist style like OverSimplified YouTube channel, "
+    "{scene}, "
+    "clean composition, no gradients, no shading, no photorealism"
 )
 
 # ── Seed base for consistency ─────────────────────────────────────────
 SEED_BASE = 42
 
+# ── Words that trigger FLUX NSFW filter (benign in context) ──────────
+NSFW_REPLACEMENTS = {
+    # Emotions / reactions
+    "insult": "surprise", "insulted": "surprised", "insulting": "surprising",
+    "offend": "surprise", "offended": "surprised", "offensive": "surprising",
+    "angry": "serious", "furious": "serious", "enraged": "serious",
+    "rude": "confused", "disgusted": "puzzled", "disturbed": "puzzled",
+    "repulsive": "strange", "horrified": "shocked", "horrifying": "shocking",
+    "upset": "concerned", "mad": "serious", "outraged": "surprised",
+    "hurt": "confused", "painful": "surprising", "suffering": "thinking",
+    "crying": "surprised", "scream": "shout", "screaming": "shouting",
+    "hate": "dislike", "hatred": "dislike", "despise": "dislike",
+    # Violence
+    "violent": "dramatic", "attack": "approach", "attacked": "approached",
+    "killed": "stopped", "kill": "stop", "murder": "mystery",
+    "fight": "debate", "fighting": "debating", "punch": "gesture",
+    "hit": "tap", "slap": "tap", "kick": "step",
+    "blood": "red", "bloody": "messy", "wound": "mark",
+    "gun": "tool", "weapon": "object", "knife": "utensil", "sword": "stick",
+    "war": "competition", "battle": "challenge", "destroy": "remove",
+    "dead": "still", "death": "end", "dying": "fading",
+    # Substances
+    "drug": "medicine", "drunk": "dizzy", "alcohol": "drink",
+    "smoking": "breathing", "cigarette": "stick", "beer": "drink",
+    # Body / suggestive
+    "naked": "plain", "nude": "bare", "sexy": "stylish",
+    "seductive": "charming", "provocative": "bold",
+    "slave": "worker", "slavery": "labor", "torture": "challenge",
+    "abuse": "trouble", "victim": "person",
+    # Social
+    "racist": "biased", "racism": "bias",
+    # Common script words that trigger false positives
+    "chases": "follows", "chasing": "following", "chase": "follow",
+    "sprinting": "running", "sprint": "run",
+    "disrespect": "surprise", "disrespected": "surprised",
+    "pray": "hope", "praying": "hoping",
+    "scolding": "talking to", "scold": "talk to",
+    "recoiling": "stepping back", "recoil": "step back",
+    "cracking": "opening", "crack": "open",
+}
 
-def _build_prompt(scene, use_flux=True):
-    """Build prompt for FLUX schnell (primary) or SDXL Lightning (fallback).
 
-    FLUX: Natural language, locked template for consistent framing.
-    SDXL: Weight syntax, style-first, under 40 words.
-    """
-    # Strip scene to core action — remove style words the LLM may have added
-    scene = scene[:120].replace("stick figure character", "").strip(", ")
-
-    # Sanitize words that trigger FLUX Schnell's aggressive NSFW filter
-    # Maps trigger words to safe replacements that preserve meaning
-    import re as _re
-    NSFW_REPLACEMENTS = {
-        # Emotions / reactions that FLUX flags
-        "insult": "surprise", "insulted": "surprised", "insulting": "surprising",
-        "offend": "surprise", "offended": "surprised", "offensive": "surprising",
-        "angry": "serious", "furious": "serious", "enraged": "serious",
-        "rude": "confused", "disgusted": "puzzled", "disturbed": "puzzled",
-        "repulsive": "strange", "horrified": "shocked", "horrifying": "shocking",
-        "upset": "concerned", "mad": "serious", "outraged": "surprised",
-        "hurt": "confused", "painful": "surprising", "suffering": "thinking",
-        "crying": "surprised", "scream": "shout", "screaming": "shouting",
-        "hate": "dislike", "hatred": "dislike", "despise": "dislike",
-        # Violence
-        "violent": "dramatic", "attack": "approach", "attacked": "approached",
-        "killed": "stopped", "kill": "stop", "murder": "mystery",
-        "fight": "debate", "fighting": "debating", "punch": "gesture",
-        "hit": "tap", "slap": "tap", "kick": "step",
-        "blood": "red", "bloody": "messy", "wound": "mark",
-        "gun": "tool", "weapon": "object", "knife": "utensil", "sword": "stick",
-        "war": "competition", "battle": "challenge", "destroy": "remove",
-        "dead": "still", "death": "end", "dying": "fading",
-        # Substances
-        "drug": "medicine", "drunk": "dizzy", "alcohol": "drink",
-        "smoking": "breathing", "cigarette": "stick", "beer": "drink",
-        # Body / suggestive
-        "naked": "plain", "nude": "bare", "sexy": "stylish",
-        "seductive": "charming", "provocative": "bold",
-        "slave": "worker", "slavery": "labor", "torture": "challenge",
-        "abuse": "trouble", "victim": "person",
-        # Social
-        "racist": "biased", "racism": "bias",
-        # Words from our scripts that trigger false positives
-        "chases": "follows", "chasing": "following", "chase": "follow",
-        "sprinting": "running", "sprint": "run",
-        "disrespect": "surprise", "disrespected": "surprised",
-        "pray": "hope", "praying": "hoping",
-        "scolding": "talking to", "scold": "talk to",
-        "recoiling": "stepping back", "recoil": "step back",
-    }
+def _sanitize_scene(scene):
+    """Remove words that trigger FLUX NSFW filter."""
     for trigger, replacement in NSFW_REPLACEMENTS.items():
-        # Case-insensitive whole-word replacement
-        scene = _re.sub(
-            r'\b' + _re.escape(trigger) + r'\b',
-            replacement, scene, flags=_re.IGNORECASE
+        scene = re.sub(
+            r'\b' + re.escape(trigger) + r'\b',
+            replacement, scene, flags=re.IGNORECASE
         )
+    return scene
 
-    if use_flux:
-        return FLUX_PROMPT_TEMPLATE.format(scene=scene)
-    else:
-        return f"{SDXL_STYLE_PREFIX}, {SDXL_CHARACTER_TAG} {scene}"
+
+def _build_prompt(scene):
+    """Build FLUX prompt from scene description.
+
+    Scene can describe multiple characters, objects, backgrounds —
+    the style template keeps everything visually consistent.
+    """
+    # Strip style words the LLM may have added (we handle style)
+    scene = scene[:200]
+    for remove in ["stick figure", "flat 2D", "thick outlines", "cartoon style",
+                    "white background", "solid colors", "minimalist"]:
+        scene = scene.replace(remove, "").replace(remove.title(), "")
+    scene = re.sub(r'\s+', ' ', scene).strip(", ")
+
+    scene = _sanitize_scene(scene)
+
+    return FLUX_STYLE_TEMPLATE.format(scene=scene)
+
+
+def _rewrite_prompt_safe(original_scene):
+    """Use Gemini to rewrite a NSFW-blocked prompt into something safe for FLUX.
+
+    Keeps the same visual meaning but removes any triggering words.
+    """
+    try:
+        from src.gemini_helper import generate_text
+        rewrite_prompt = f"""Rewrite this image description to be COMPLETELY safe for an AI image generator with a strict content filter.
+
+ORIGINAL: "{original_scene}"
+
+RULES:
+- Keep the same visual scene and meaning
+- Remove ALL negative emotions (angry, upset, hurt, offended, etc.)
+- Remove ALL conflict (fighting, chasing, attacking, etc.)
+- Replace with neutral/positive alternatives
+- Keep it as a simple scene description: who is doing what, with what objects, what background
+- MAX 100 characters
+- Do NOT add style instructions — just describe the scene
+
+Return ONLY the rewritten description, nothing else."""
+
+        result = generate_text(rewrite_prompt)
+        if result and len(result.strip()) > 10:
+            safe = result.strip().strip('"').strip("'")
+            print(f"    🔄 Rewritten: {safe[:80]}...")
+            return safe
+    except Exception as e:
+        print(f"    ⚠️  Gemini rewrite failed: {e}")
+
+    # Fallback: strip the scene to bare minimum
+    return "cartoon boy standing with question mark above head, simple background"
 
 
 def _fit_to_hd(img: Image.Image) -> Image.Image:
     """Resize image to 1920x1080 without stretching.
 
     Scales to fill the frame, then center-crops to exact 16:9.
-    No black bars, no distortion.
     """
     target_w, target_h = VIDEO_WIDTH, VIDEO_HEIGHT
-    target_ratio = target_w / target_h  # 1.777...
+    target_ratio = target_w / target_h
 
     w, h = img.size
     img_ratio = w / h
@@ -131,108 +160,76 @@ def _fit_to_hd(img: Image.Image) -> Image.Image:
     return img
 
 
-class _NSFWError(Exception):
-    """Raised when FLUX rejects a prompt as NSFW — skip to SDXL immediately."""
-    pass
-
-
-def _try_flux(prompt, output_path, image_index=0):
-    """Try Cloudflare FLUX.1 Schnell (primary). Returns True on success.
-
-    Raises _NSFWError if FLUX flags the prompt — caller should skip to SDXL.
-    """
-    try:
-        from src.cloudflare_helper import generate_cloudflare_image
-        seed = SEED_BASE + image_index
-        generate_cloudflare_image(
-            prompt, output_path,
-            width=1024, height=576,  # 16:9 within FLUX limits
-            seed=seed,
-            num_steps=4,  # FLUX schnell optimal at 4 steps
-            use_flux=True,
-        )
-        # Upscale to full HD
-        img = Image.open(output_path).convert("RGB")
-        img = _fit_to_hd(img)
-        img.save(output_path, "PNG")
-        return True
-    except Exception as e:
-        err_str = str(e).lower()
-        if "nsfw" in err_str or "content" in err_str and "prohibited" in err_str:
-            print(f"    ⚠️  FLUX NSFW filter triggered, skipping to SDXL")
-            raise _NSFWError(str(e))
-        print(f"    ⚠️  FLUX Schnell: {e}")
-    return False
-
-
-def _try_sdxl(prompt, output_path, image_index=0):
-    """Try Cloudflare SDXL Lightning (fallback). Returns True on success."""
-    try:
-        from src.cloudflare_helper import generate_cloudflare_image
-        seed = SEED_BASE + image_index
-        generate_cloudflare_image(
-            prompt, output_path,
-            width=1024, height=576,
-            seed=seed,
-            negative_prompt=SDXL_NEGATIVE_PROMPT,
-            num_steps=8,
-            use_flux=False,
-        )
-        img = Image.open(output_path).convert("RGB")
-        img = _fit_to_hd(img)
-        img.save(output_path, "PNG")
-        return True
-    except Exception as e:
-        print(f"    ⚠️  SDXL Lightning: {e}")
-    return False
-
-
-def _try_gemini(prompt, output_path):
-    """Try Gemini image generation. Returns True on success."""
-    try:
-        from src.gemini_helper import generate_image
-        resp = generate_image(prompt)
-        if not resp or not resp.candidates:
-            return False
-        for part in resp.candidates[0].content.parts:
-            if part.inline_data and part.inline_data.mime_type.startswith("image/"):
-                data = part.inline_data.data
-                raw = base64.b64decode(data) if isinstance(data, str) else data
-                output_path.write_bytes(raw)
-                img = Image.open(output_path).convert("RGB")
-                img = _fit_to_hd(img)
-                img.save(output_path, "PNG")
-                return True
-    except Exception as e:
-        print(f"    ⚠️  Gemini image: {e}")
-    return False
+def _generate_flux(prompt, output_path, image_index=0):
+    """Generate via FLUX Schnell. Returns True on success, raises on NSFW."""
+    from src.cloudflare_helper import generate_cloudflare_image
+    seed = SEED_BASE + image_index
+    generate_cloudflare_image(
+        prompt, output_path,
+        width=1024, height=576,
+        seed=seed,
+        num_steps=4,
+        use_flux=True,
+    )
+    img = Image.open(output_path).convert("RGB")
+    img = _fit_to_hd(img)
+    img.save(output_path, "PNG")
+    return True
 
 
 def generate_single_image(prompt, output_path, image_index=0):
-    """FLUX Schnell primary → SDXL Lightning fallback. Both free on Cloudflare."""
+    """Generate image via FLUX Schnell. On NSFW → rewrite prompt → retry FLUX.
 
-    # Try FLUX schnell first (higher quality)
-    flux_prompt = _build_prompt(prompt, use_flux=True)
-    nsfw_blocked = False
-    for attempt in range(3):
-        print(f"    ⚡ FLUX [{attempt+1}/3]...")
+    Flow:
+    1. Sanitize + try FLUX (up to 2 attempts)
+    2. If NSFW blocked → Gemini rewrites prompt → try FLUX again (up to 2 attempts)
+    3. If still blocked → use generic safe prompt as last resort
+    """
+
+    flux_prompt = _build_prompt(prompt)
+
+    # ── Attempt 1-2: original prompt (sanitized) ─────────────────
+    for attempt in range(2):
         try:
-            if _try_flux(flux_prompt, output_path, image_index):
-                return output_path
-        except _NSFWError:
-            nsfw_blocked = True
-            break  # Don't retry FLUX — skip straight to SDXL
-
-    # Fallback to SDXL Lightning (more lenient content filter)
-    if nsfw_blocked:
-        print(f"    ☁️  FLUX blocked prompt, trying SDXL (more lenient)...")
-    sdxl_prompt = _build_prompt(prompt, use_flux=False)
-    for attempt in range(3):
-        print(f"    ☁️  SDXL fallback [{attempt+1}/3]...")
-        if _try_sdxl(sdxl_prompt, output_path, image_index):
+            print(f"    ⚡ FLUX [{attempt+1}/2]...")
+            _generate_flux(flux_prompt, output_path, image_index)
             return output_path
+        except Exception as e:
+            err_str = str(e).lower()
+            if "nsfw" in err_str or ("content" in err_str and "prohibited" in err_str):
+                print(f"    ⚠️  NSFW blocked — rewriting prompt...")
+                break  # Go to rewrite
+            print(f"    ⚠️  FLUX error: {e}")
+            if attempt == 1:
+                break
 
-    raise ImageGenerationFailed(f"All methods failed: {output_path.name}")
+    # ── Attempt 3-4: Gemini-rewritten safe prompt ────────────────
+    safe_scene = _rewrite_prompt_safe(prompt)
+    safe_prompt = _build_prompt(safe_scene)
+
+    for attempt in range(2):
+        try:
+            print(f"    ⚡ FLUX rewritten [{attempt+1}/2]...")
+            _generate_flux(safe_prompt, output_path, image_index)
+            return output_path
+        except Exception as e:
+            err_str = str(e).lower()
+            if "nsfw" in err_str or ("content" in err_str and "prohibited" in err_str):
+                print(f"    ⚠️  Still NSFW after rewrite — using safe fallback...")
+                break
+            print(f"    ⚠️  FLUX error: {e}")
+
+    # ── Attempt 5: generic safe prompt (guaranteed to work) ──────
+    fallback_prompt = _build_prompt(
+        "cartoon boy standing in center with question mark floating above head, "
+        "simple colorful background with decorative elements"
+    )
+    try:
+        print(f"    ⚡ FLUX safe fallback...")
+        _generate_flux(fallback_prompt, output_path, image_index)
+        return output_path
+    except Exception as e:
+        raise ImageGenerationFailed(f"FLUX failed even with safe prompt: {e}")
 
 
 def generate_all_images(image_prompts):
@@ -260,20 +257,27 @@ def generate_thumbnail(script):
     title = script["title"]
 
     flux_prompt = _build_prompt(
-        f"YouTube thumbnail, vibrant colors, {title[:100]}, "
-        f"surprised expression, bold composition",
-        use_flux=True
+        f"cartoon boy with excited expression, colorful vibrant scene, "
+        f"topic: {title[:80]}, eye-catching composition, multiple fun elements"
     )
 
-    # FLUX primary → SDXL → gradient fallback
-    generated = _try_flux(flux_prompt, thumb, image_index=999)
-    if not generated:
-        sdxl_prompt = _build_prompt(
-            f"YouTube thumbnail, vibrant colors, {title[:100]}, "
-            f"surprised expression, bold composition",
-            use_flux=False
-        )
-        generated = _try_sdxl(sdxl_prompt, thumb, image_index=999)
+    # Try FLUX → gradient fallback
+    generated = False
+    try:
+        _generate_flux(flux_prompt, thumb, image_index=999)
+        generated = True
+    except Exception as e:
+        print(f"    ⚠️  Thumbnail FLUX: {e}")
+        # Try rewrite
+        try:
+            safe = _rewrite_prompt_safe(
+                f"excited cartoon boy, colorful scene about {title[:60]}"
+            )
+            _generate_flux(_build_prompt(safe), thumb, image_index=999)
+            generated = True
+        except Exception:
+            pass
+
     if not generated:
         img = Image.new("RGB", (1280, 720), (30, 20, 60))
         img.save(thumb, "PNG")
