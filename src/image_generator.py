@@ -50,23 +50,53 @@ def _build_prompt(scene, use_flux=True):
     # Strip scene to core action — remove style words the LLM may have added
     scene = scene[:120].replace("stick figure character", "").strip(", ")
 
-    # Sanitize words that trigger FLUX Schnell's NSFW filter
-    # These are benign in context but Cloudflare's filter is aggressive
-    NSFW_TRIGGERS = [
-        "insult", "insulted", "insulting", "offensive", "offended",
-        "deeply offended", "repulsive", "disgusted", "disturbed",
-        "rude", "angry", "furious", "violent", "attack", "killed",
-        "naked", "nude", "sexy", "seductive", "provocative",
-        "drug", "drunk", "alcohol", "smoking", "blood", "bloody",
-        "gun", "weapon", "knife", "sword", "fight", "punch",
-        "slave", "slavery", "torture", "abuse", "victim",
-        "hate", "hatred", "racist", "racism",
-    ]
-    scene_lower = scene.lower()
-    for trigger in NSFW_TRIGGERS:
-        if trigger in scene_lower:
-            scene = scene.replace(trigger, "upset")
-            scene = scene.replace(trigger.capitalize(), "Upset")
+    # Sanitize words that trigger FLUX Schnell's aggressive NSFW filter
+    # Maps trigger words to safe replacements that preserve meaning
+    import re as _re
+    NSFW_REPLACEMENTS = {
+        # Emotions / reactions that FLUX flags
+        "insult": "surprise", "insulted": "surprised", "insulting": "surprising",
+        "offend": "surprise", "offended": "surprised", "offensive": "surprising",
+        "angry": "serious", "furious": "serious", "enraged": "serious",
+        "rude": "confused", "disgusted": "puzzled", "disturbed": "puzzled",
+        "repulsive": "strange", "horrified": "shocked", "horrifying": "shocking",
+        "upset": "concerned", "mad": "serious", "outraged": "surprised",
+        "hurt": "confused", "painful": "surprising", "suffering": "thinking",
+        "crying": "surprised", "scream": "shout", "screaming": "shouting",
+        "hate": "dislike", "hatred": "dislike", "despise": "dislike",
+        # Violence
+        "violent": "dramatic", "attack": "approach", "attacked": "approached",
+        "killed": "stopped", "kill": "stop", "murder": "mystery",
+        "fight": "debate", "fighting": "debating", "punch": "gesture",
+        "hit": "tap", "slap": "tap", "kick": "step",
+        "blood": "red", "bloody": "messy", "wound": "mark",
+        "gun": "tool", "weapon": "object", "knife": "utensil", "sword": "stick",
+        "war": "competition", "battle": "challenge", "destroy": "remove",
+        "dead": "still", "death": "end", "dying": "fading",
+        # Substances
+        "drug": "medicine", "drunk": "dizzy", "alcohol": "drink",
+        "smoking": "breathing", "cigarette": "stick", "beer": "drink",
+        # Body / suggestive
+        "naked": "plain", "nude": "bare", "sexy": "stylish",
+        "seductive": "charming", "provocative": "bold",
+        "slave": "worker", "slavery": "labor", "torture": "challenge",
+        "abuse": "trouble", "victim": "person",
+        # Social
+        "racist": "biased", "racism": "bias",
+        # Words from our scripts that trigger false positives
+        "chases": "follows", "chasing": "following", "chase": "follow",
+        "sprinting": "running", "sprint": "run",
+        "disrespect": "surprise", "disrespected": "surprised",
+        "pray": "hope", "praying": "hoping",
+        "scolding": "talking to", "scold": "talk to",
+        "recoiling": "stepping back", "recoil": "step back",
+    }
+    for trigger, replacement in NSFW_REPLACEMENTS.items():
+        # Case-insensitive whole-word replacement
+        scene = _re.sub(
+            r'\b' + _re.escape(trigger) + r'\b',
+            replacement, scene, flags=_re.IGNORECASE
+        )
 
     if use_flux:
         return FLUX_PROMPT_TEMPLATE.format(scene=scene)
