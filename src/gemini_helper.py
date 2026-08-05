@@ -93,22 +93,30 @@ def generate_speech(text, voice_name="Kore", temperature=1.0):
     """Generate speech audio via Gemini TTS (gemini-2.5-flash-preview-tts).
 
     Returns raw PCM audio bytes (24kHz, mono, 16-bit little-endian).
-    Free tier: 3 RPM — use rate limiting externally.
+    Uses dedicated GEMINI_VOICE_KEY (separate quota from text calls).
+    Falls back to shared keys if dedicated key not set.
 
     Args:
         text: Text to speak. Can include emotion cues like [excitedly], [whispers], etc.
         voice_name: One of Gemini's 30 prebuilt voices (default: Kore — warm male).
         temperature: Controls expressiveness (0.0-2.0, default 1.0).
     """
+    from src.config import GEMINI_VOICE_KEY
     _log_key_info()
     last_err = None
 
     tts_model = "gemini-2.5-flash-preview-tts"
 
+    # Use dedicated voice key if available, otherwise fall back to shared keys
+    if GEMINI_VOICE_KEY:
+        tts_keys = [GEMINI_VOICE_KEY]
+    else:
+        tts_keys = GEMINI_API_KEYS
+
     for rnd in range(1, 5):  # 4 rounds with backoff
         keys_tried = 0
-        while keys_tried < max(len(GEMINI_API_KEYS), 1):
-            client = _next_client()
+        while keys_tried < max(len(tts_keys), 1):
+            client = genai.Client(api_key=tts_keys[keys_tried % len(tts_keys)] if tts_keys else "")
             keys_tried += 1
             try:
                 resp = client.models.generate_content(
@@ -141,7 +149,7 @@ def generate_speech(text, voice_name="Kore", temperature=1.0):
                 err = str(e)
                 last_err = err
                 if _is_auth_error(err):
-                    key_prefix = GEMINI_API_KEYS[(_key_index - 1) % len(GEMINI_API_KEYS)][:8] if GEMINI_API_KEYS else "?"
+                    key_prefix = tts_keys[(keys_tried - 1) % len(tts_keys)][:8] if tts_keys else "?"
                     print(f"    ⚠️  Key {key_prefix}... auth failed on TTS, trying next...")
                     continue
                 elif _is_overloaded(err):
