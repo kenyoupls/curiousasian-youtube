@@ -1,29 +1,29 @@
 {
-  "started_at": "2026-08-05T09:18:55.113031",
+  "started_at": "2026-08-05T09:34:55.164859",
   "steps": {
     "script": {
-      "title": "Why Japanese People NEVER Tip",
-      "source": "claude",
-      "sections": 13
+      "title": "Why you must NEVER finish your rice in Asia",
+      "source": "gemini_backup",
+      "sections": 14
     },
     "audio": {
-      "segments": 13,
-      "total_seconds": 54.9
+      "segments": 14,
+      "total_seconds": 59.3
     },
-    "image_prompts": 23,
-    "images": 23,
+    "image_prompts": 24,
+    "images": 24,
     "audio_production": {
       "sfx": [
         "whoosh",
         "dramatic_hit",
         "ding"
       ],
-      "music_duration": 64.9
+      "music_duration": 69.3
     },
     "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4"
   },
   "status": "success",
   "skipped_scripts": [],
-  "completed_at": "2026-08-05T09:20:39.021416",
-  "total_duration_seconds": 54.9
+  "completed_at": "2026-08-05T09:36:47.945039",
+  "total_duration_seconds": 59.3
 }
