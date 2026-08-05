@@ -1,10 +1,7 @@
-"""Image generation — Pollinations FLUX primary, Cloudflare FLUX fallback.
+"""Image generation — Cloudflare FLUX Schnell (free, 10k neurons/day).
 
 On NSFW block: Gemini rewrites the prompt → retry. Generic safe fallback last resort.
 All images use a locked style template + locked character for channel-wide consistency.
-
-Pollinations: Free unlimited FLUX (no API key).
-Cloudflare: 10,000 neurons/day (~200 images) — fallback only.
 """
 
 import re
@@ -171,24 +168,8 @@ def _fit_to_hd(img: Image.Image) -> Image.Image:
     return img
 
 
-def _generate_pollinations(prompt, output_path, image_index=0):
-    """Generate via Pollinations FLUX (free, no API key). Returns True on success."""
-    from src.pollinations_helper import generate_pollinations_image
-    seed = SEED_BASE + image_index
-    generate_pollinations_image(
-        prompt, output_path,
-        width=1024, height=576,
-        seed=seed,
-        model="flux",
-    )
-    img = Image.open(output_path).convert("RGB")
-    img = _fit_to_hd(img)
-    img.save(output_path, "PNG")
-    return True
-
-
 def _generate_cloudflare(prompt, output_path, image_index=0):
-    """Generate via Cloudflare FLUX Schnell (fallback). Returns True on success."""
+    """Generate via Cloudflare FLUX Schnell (primary). Returns True on success."""
     from src.cloudflare_helper import generate_cloudflare_image
     seed = SEED_BASE + image_index
     generate_cloudflare_image(
@@ -205,79 +186,58 @@ def _generate_cloudflare(prompt, output_path, image_index=0):
 
 
 def generate_single_image(prompt, output_path, image_index=0):
-    """Generate image: Pollinations primary → Cloudflare fallback.
+    """Generate image: Cloudflare FLUX primary.
 
     Flow:
-    1. Sanitize + try Pollinations FLUX (2 attempts)
-    2. If NSFW blocked → Gemini rewrites prompt → retry Pollinations (2 attempts)
-    3. If Pollinations fails → try Cloudflare FLUX (2 attempts)
-    4. If still blocked → use generic safe prompt as last resort
+    1. Sanitize + try Cloudflare FLUX (2 attempts)
+    2. If NSFW blocked → Gemini rewrites prompt → retry Cloudflare (2 attempts)
+    3. If still blocked → use generic safe prompt as last resort
     """
 
     flux_prompt = _build_prompt(prompt)
 
-    # ── Attempt 1-2: Pollinations with original prompt ──────────
-    nsfw_blocked = False
+    # ── Attempt 1-2: Cloudflare with original prompt ──────────
     for attempt in range(2):
         try:
-            print(f"    🌸 Pollinations [{attempt+1}/2]...")
-            _generate_pollinations(flux_prompt, output_path, image_index)
+            print(f"    ⚡ Cloudflare FLUX [{attempt+1}/2]...")
+            _generate_cloudflare(flux_prompt, output_path, image_index)
             return output_path
         except Exception as e:
             err_str = str(e).lower()
             if "nsfw" in err_str or ("content" in err_str and "prohibited" in err_str):
                 print(f"    ⚠️  NSFW blocked — rewriting prompt...")
-                nsfw_blocked = True
                 break
-            print(f"    ⚠️  Pollinations error: {e}")
+            print(f"    ⚠️  Cloudflare error: {e}")
             if attempt == 1:
                 break
 
-    # ── Attempt 3-4: Gemini-rewritten safe prompt via Pollinations ──
+    # ── Attempt 3-4: Gemini-rewritten safe prompt ──────────────
     safe_scene = _rewrite_prompt_safe(prompt)
     safe_prompt = _build_prompt(safe_scene)
 
     for attempt in range(2):
         try:
-            print(f"    🌸 Pollinations rewritten [{attempt+1}/2]...")
-            _generate_pollinations(safe_prompt, output_path, image_index)
+            print(f"    ⚡ Cloudflare FLUX rewritten [{attempt+1}/2]...")
+            _generate_cloudflare(safe_prompt, output_path, image_index)
             return output_path
         except Exception as e:
             err_str = str(e).lower()
             if "nsfw" in err_str or ("content" in err_str and "prohibited" in err_str):
-                print(f"    ⚠️  Still NSFW after rewrite — trying Cloudflare...")
-                break
-            print(f"    ⚠️  Pollinations error: {e}")
-
-    # ── Attempt 5-6: Cloudflare FLUX fallback ───────────────────
-    for attempt in range(2):
-        try:
-            print(f"    ⚡ Cloudflare FLUX [{attempt+1}/2]...")
-            _generate_cloudflare(safe_prompt if nsfw_blocked else flux_prompt,
-                                  output_path, image_index)
-            return output_path
-        except Exception as e:
-            err_str = str(e).lower()
-            if "nsfw" in err_str or ("content" in err_str and "prohibited" in err_str):
+                print(f"    ⚠️  Still NSFW after rewrite...")
                 break
             print(f"    ⚠️  Cloudflare error: {e}")
 
-    # ── Attempt 7: generic safe prompt (guaranteed to work) ─────
+    # ── Attempt 5: generic safe prompt (guaranteed to work) ─────
     fallback_prompt = _build_prompt(
         f"{LOCKED_CHARACTER} standing in center with question mark floating above head, "
         "simple colorful background with decorative elements"
     )
     try:
-        print(f"    🌸 Safe fallback...")
-        _generate_pollinations(fallback_prompt, output_path, image_index)
+        print(f"    ⚡ Cloudflare safe fallback...")
+        _generate_cloudflare(fallback_prompt, output_path, image_index)
         return output_path
-    except Exception:
-        try:
-            print(f"    ⚡ Cloudflare safe fallback...")
-            _generate_cloudflare(fallback_prompt, output_path, image_index)
-            return output_path
-        except Exception as e:
-            raise ImageGenerationFailed(f"All image engines failed: {e}")
+    except Exception as e:
+        raise ImageGenerationFailed(f"All image engines failed: {e}")
 
 
 def generate_all_images(image_prompts):
@@ -309,27 +269,21 @@ def generate_thumbnail(script):
         f"topic: {title[:80]}, eye-catching composition, multiple fun elements"
     )
 
-    # Try Pollinations → Cloudflare → gradient fallback
+    # Try Cloudflare → rewrite → gradient fallback
     generated = False
     try:
-        _generate_pollinations(flux_prompt, thumb, image_index=999)
+        _generate_cloudflare(flux_prompt, thumb, image_index=999)
         generated = True
     except Exception as e:
-        print(f"    ⚠️  Thumbnail Pollinations: {e}")
+        print(f"    ⚠️  Thumbnail Cloudflare: {e}")
         try:
-            _generate_cloudflare(flux_prompt, thumb, image_index=999)
+            safe = _rewrite_prompt_safe(
+                f"excited {LOCKED_CHARACTER}, colorful scene about {title[:60]}"
+            )
+            _generate_cloudflare(_build_prompt(safe), thumb, image_index=999)
             generated = True
         except Exception as e2:
-            print(f"    ⚠️  Thumbnail Cloudflare: {e2}")
-            # Try rewrite
-            try:
-                safe = _rewrite_prompt_safe(
-                    f"excited {LOCKED_CHARACTER}, colorful scene about {title[:60]}"
-                )
-                _generate_pollinations(_build_prompt(safe), thumb, image_index=999)
-                generated = True
-            except Exception:
-                pass
+            print(f"    ⚠️  Thumbnail rewrite also failed: {e2}")
 
     if not generated:
         img = Image.new("RGB", (1280, 720), (30, 20, 60))
