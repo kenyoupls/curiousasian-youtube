@@ -24,6 +24,7 @@ FLUX_STYLE_TEMPLATE = (
     "flat 2D cartoon illustration, thick black outlines, solid flat colors, "
     "simple minimalist style like OverSimplified YouTube channel, "
     "{scene}, "
+    "all important subjects centered in middle of frame, "
     "clean composition, no gradients, no shading, no photorealism"
 )
 

@@ -22,7 +22,8 @@ from src.image_generator import generate_all_images, generate_thumbnail, ImageGe
 from src.sfx_generator import generate_all_sfx, generate_background_music
 from src.video_builder import build_video
 from src.telegram_notifier import (
-    notify_scripts_low, notify_video_complete, notify_pipeline_failed
+    notify_scripts_low, notify_video_complete, notify_pipeline_failed,
+    notify_nsfw_warning
 )
 
 MAX_SCRIPT_RETRIES = 3  # Try up to 3 different scripts before giving up
@@ -184,11 +185,15 @@ def run_pipeline():
             print(f"   Skipped scripts: {len(run_log['skipped_scripts'])}")
         print("=" * 60)
 
-        # Notify via Telegram
+        # Notify via Telegram — send actual video + thumbnail
+        remaining = get_queue_count()
         notify_video_complete(
             title=script["title"],
             duration=result["total_duration"],
-            source=script.get("_source", "unknown")
+            source=script.get("_source", "unknown"),
+            video_path=result.get("video_path"),
+            thumbnail_path=result.get("thumbnail_path"),
+            queue_remaining=remaining,
         )
 
     except Exception as e:

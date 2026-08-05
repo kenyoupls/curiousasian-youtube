@@ -1,7 +1,8 @@
 """Voice generation — Google Cloud TTS primary, gTTS fallback.
 
-Google Cloud TTS: Natural Neural2/WaveNet voices with proper SSML support.
-gTTS: Google Translate TTS fallback (robotic but reliable).
+Dynamic delivery: pitch, rate, and emphasis vary by section type.
+Hook sections are fast + high energy. Twists get dramatic pauses.
+Context sections drop to authoritative tone. Payoffs spike back up.
 """
 
 import base64
@@ -16,31 +17,61 @@ from src.config import GOOGLE_TTS_API_KEY, OUTPUT_DIR
 
 # ── Google Cloud TTS config ──────────────────────────────────────────
 GOOGLE_TTS_URL = "https://texttospeech.googleapis.com/v1/text:synthesize"
-# Neural2-D = male, natural storytelling voice
-# Other options: en-US-Neural2-F (female), en-US-Neural2-J (male casual)
 GOOGLE_TTS_VOICE = "en-US-Neural2-D"
 GOOGLE_TTS_LANGUAGE = "en-US"
-GOOGLE_TTS_SPEAKING_RATE = 1.25  # fast MrBeast energy — no dead air
-GOOGLE_TTS_PITCH = 1.0  # slightly higher = more energetic and young
+
+# ── Section-specific voice profiles ──────────────────────────────────
+# Each section type gets its own speaking rate and pitch for tonal variety.
+# This prevents the flat monotone that kills engagement.
+SECTION_VOICE_PROFILES = {
+    # Hook: fast, high energy, excited — grab attention
+    "hook":    {"rate": 1.30, "pitch": 2.0},
+    # Build/origin: slightly slower, authoritative — "let me explain"
+    "build":   {"rate": 1.15, "pitch": 0.0},
+    "origin":  {"rate": 1.15, "pitch": 0.0},
+    # Twist: medium pace, pitch drops then spikes — dramatic reveal
+    "twist":   {"rate": 1.10, "pitch": 1.5},
+    # Payoff: confident, measured — the satisfying answer
+    "payoff":  {"rate": 1.20, "pitch": 1.0},
+    # Close: warm, slightly slower — brand moment
+    "close":   {"rate": 1.10, "pitch": 0.5},
+    # Default fallback
+    "default": {"rate": 1.20, "pitch": 1.0},
+}
 
 
-# ── Pause markers ─────────────────────────────────────────────────────
-# ── Pause markers — dramatic beats before reveals ────────────────────
-PAUSE_BEFORE = [
+def _get_voice_profile(section_id: str) -> dict:
+    """Get speaking rate + pitch for a section based on its ID prefix."""
+    for prefix, profile in SECTION_VOICE_PROFILES.items():
+        if section_id.startswith(prefix):
+            return profile
+    return SECTION_VOICE_PROFILES["default"]
+
+
+# ── Pause markers ────────────────────────────────────────────────────
+# BIG pauses (500-600ms) — before major reveals. Max 1-2 per video.
+BIG_REVEAL_PAUSE_BEFORE = [
+    r"but here's what no one",
+    r"here's the part",
+    r"here's what nobody",
+    r"the real reason",
+    r"plot twist",
+    r"but here's the twist",
+]
+
+# MEDIUM pauses (350ms) — before dramatic phrases
+MEDIUM_PAUSE_BEFORE = [
     r"but here's",
     r"and here's",
     r"here's the twist",
-    r"here's the part",
     r"here's what",
     r"the twist",
     r"the answer",
-    r"the real reason",
     r"now here's",
     r"but wait",
     r"except",
     r"the truth is",
     r"it turns out",
-    r"plot twist",
     r"and that should",
     r"that's not",
     r"because ",
@@ -48,44 +79,107 @@ PAUSE_BEFORE = [
     r"it's gonna",
     r"meanwhile",
     r"so which",
-    r"that same tip",
-    r"in japan",
+    r"no one tells you",
+    r"what they don't",
+    r"the opposite",
+    r"turns out",
 ]
 
-# Words to emphasize — punchy MrBeast-style stress
-EMPHASIS_WORDS = [
-    r"never", r"always", r"every", r"nothing", r"everything",
-    r"actually", r"literally", r"exactly", r"superior", r"inferior",
-    r"thousands", r"millions", r"billions",
-    r"not", r"don't", r"can't", r"won't", r"isn't", r"wasn't",
-    r"wrong", r"right", r"real", r"fake", r"true", r"false",
-    r"secret", r"hidden", r"ancient", r"sacred",
-    r"insane", r"offensive", r"insulted", r"broken", r"wild",
-    r"best", r"worst", r"biggest", r"craziest",
-    r"chases", r"sprinting", r"flips",
+# MICRO pauses (150ms) — AFTER key words for emphasis ("TWO... DOLLARS")
+MICRO_PAUSE_AFTER = [
+    r"zero",
+    r"two",
+    r"three",
+    r"five",
+    r"ten",
+    r"twenty",
+    r"hundred",
+    r"thousand",
+    r"million",
+    r"billion",
+    r"dollars",
+    r"percent",
+    r"centuries",
+    r"opposite",
+    r"nothing",
+    r"everything",
+]
+
+# ── Emphasis hierarchy ───────────────────────────────────────────────
+# STRONG: 2-3 money words per video MAX — the words that carry the punchline
+EMPHASIS_STRONG = [
+    r"never", r"always", r"every", r"zero",
+    r"insane", r"broken", r"wild", r"huge",
+    r"opposite", r"wrong",
     r"living wage",
 ]
 
-DRAMATIC_PAUSE_MS = 350   # tight pauses — just enough for impact, not boredom
-SECTION_END_PAUSE_MS = 250  # barely any gap between sections — keeps momentum
+# MODERATE: supporting punchy words — less intense
+EMPHASIS_MODERATE = [
+    r"actually", r"literally", r"exactly",
+    r"not", r"don't", r"can't", r"won't", r"isn't", r"wasn't",
+    r"real", r"fake", r"true", r"false",
+    r"secret", r"hidden", r"ancient", r"sacred",
+    r"best", r"worst", r"biggest", r"craziest",
+    r"thousands", r"millions", r"billions",
+    r"superior", r"inferior",
+]
+
+BIG_REVEAL_PAUSE_MS = 550     # before major twist — feels dramatic
+MEDIUM_PAUSE_MS = 300         # before reveals — just enough for impact
+MICRO_PAUSE_MS = 150          # after key numbers/words — "TWO... DOLLARS"
+SECTION_END_PAUSE_MS = 200    # tiny gap between sections — momentum
 
 
-def _build_ssml(text: str) -> str:
-    """Build SSML with pauses before dramatic phrases and emphasis on key words."""
+def _build_ssml(text: str, section_id: str = "") -> str:
+    """Build SSML with dynamic pauses and tiered emphasis.
+
+    Pause hierarchy: big reveal > medium > micro (after words)
+    Emphasis hierarchy: strong (2-3 per video) > moderate
+    """
     ssml = text
 
-    # Add pause before dramatic phrases
-    for pattern in PAUSE_BEFORE:
+    # ── Big reveal pauses (500-600ms) — before major twists ──────
+    for pattern in BIG_REVEAL_PAUSE_BEFORE:
         regex = re.compile(f'({pattern})', re.IGNORECASE)
         ssml = regex.sub(
-            f'<break time="{DRAMATIC_PAUSE_MS}ms"/> \\1',
+            f'<break time="{BIG_REVEAL_PAUSE_MS}ms"/> \\1',
+            ssml, count=1  # max 1 per section
+        )
+
+    # ── Medium pauses (350ms) — before dramatic phrases ──────────
+    for pattern in MEDIUM_PAUSE_BEFORE:
+        regex = re.compile(f'({pattern})', re.IGNORECASE)
+        # Skip if already has a big pause before this phrase
+        if f'<break time="{BIG_REVEAL_PAUSE_MS}ms"/>' not in ssml or pattern not in ssml.lower():
+            ssml = regex.sub(
+                f'<break time="{MEDIUM_PAUSE_MS}ms"/> \\1',
+                ssml, count=2
+            )
+
+    # ── Micro pauses (150ms) — AFTER key words ───────────────────
+    for word in MICRO_PAUSE_AFTER:
+        regex = re.compile(rf'\b({word})\b', re.IGNORECASE)
+        ssml = regex.sub(
+            rf'\1 <break time="{MICRO_PAUSE_MS}ms"/>',
             ssml, count=2
         )
 
-    # Emphasize key words (only whole words)
-    for word in EMPHASIS_WORDS:
+    # ── Strong emphasis (2-3 money words) ────────────────────────
+    for word in EMPHASIS_STRONG:
         regex = re.compile(rf'\b({word})\b', re.IGNORECASE)
-        ssml = regex.sub(r'<emphasis level="strong">\1</emphasis>', ssml, count=3)
+        ssml = regex.sub(
+            r'<emphasis level="strong">\1</emphasis>',
+            ssml, count=2  # max 2 per section
+        )
+
+    # ── Moderate emphasis (supporting words) ─────────────────────
+    for word in EMPHASIS_MODERATE:
+        regex = re.compile(rf'\b({word})\b', re.IGNORECASE)
+        ssml = regex.sub(
+            r'<emphasis level="moderate">\1</emphasis>',
+            ssml, count=3
+        )
 
     return f'<speak>{ssml}</speak>'
 
@@ -122,12 +216,13 @@ def get_audio_duration(audio_path: Path) -> float:
         return float(result.stdout.strip())
 
 
-def _generate_google_tts(text: str, output_path: Path):
-    """Generate audio using Google Cloud TTS with SSML."""
+def _generate_google_tts(text: str, output_path: Path, section_id: str = ""):
+    """Generate audio using Google Cloud TTS with SSML + section-aware voice."""
     if not GOOGLE_TTS_API_KEY:
         raise RuntimeError("GOOGLE_TTS_API_KEY not set")
 
-    ssml = _build_ssml(text)
+    profile = _get_voice_profile(section_id)
+    ssml = _build_ssml(text, section_id)
 
     payload = {
         "input": {"ssml": ssml},
@@ -137,8 +232,8 @@ def _generate_google_tts(text: str, output_path: Path):
         },
         "audioConfig": {
             "audioEncoding": "MP3",
-            "speakingRate": GOOGLE_TTS_SPEAKING_RATE,
-            "pitch": GOOGLE_TTS_PITCH,
+            "speakingRate": profile["rate"],
+            "pitch": profile["pitch"],
             "effectsProfileId": ["large-home-entertainment-class-device"],
         },
     }
@@ -171,18 +266,21 @@ def _generate_gtts(text: str, output_path: Path):
     tts.save(str(output_path))
 
 
-def generate_section_audio(text: str, output_path: Path) -> Path:
-    """Generate audio: Google Cloud TTS primary → gTTS fallback."""
+def generate_section_audio(text: str, output_path: Path,
+                           section_id: str = "") -> Path:
+    """Generate audio: Google Cloud TTS primary → gTTS fallback.
 
-    # Primary: Google Cloud TTS
+    section_id determines voice profile (pitch, rate) for tonal variety.
+    """
+    # Primary: Google Cloud TTS (with section-aware voice)
     try:
-        _generate_google_tts(text, output_path)
+        _generate_google_tts(text, output_path, section_id)
         if output_path.exists() and output_path.stat().st_size > 1000:
             return output_path
     except Exception as e:
         print(f"    ⚠️  Google TTS failed, falling back to gTTS: {e}")
 
-    # Fallback: gTTS
+    # Fallback: gTTS (no section-aware voice, but still works)
     try:
         _generate_gtts(text, output_path)
         _inject_pauses_silence(output_path)
@@ -201,7 +299,10 @@ def generate_all_audio(script: dict) -> list[dict]:
         out = audio_dir / f"section_{i:02d}_{section['id']}.mp3"
 
         if not out.exists():
-            generate_section_audio(section["narration"], out)
+            generate_section_audio(
+                section["narration"], out,
+                section_id=section["id"]
+            )
 
         duration = get_audio_duration(out)
         segments.append({

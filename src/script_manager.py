@@ -77,38 +77,48 @@ def _generate_gemini_backup_script() -> dict:
 
     done_str = "\n".join(f"- {t}" for t in done_topics[-50:]) if done_topics else "None"
 
-    prompt = f"""You are a scriptwriter for "CuriousAsian", a viral YouTube channel that explains cultural habits and traditions.
+    prompt = f"""You are a scriptwriter for "CuriousAsian", a viral YouTube Shorts channel that explains cultural habits and traditions.
+
+GOLDEN RULE: The viewer must NEVER be able to predict the next sentence. Every line must surprise, contradict, or shift the angle. If a viewer can finish your sentence — you've lost them.
 
 ENERGY — MrBeast meets OverSimplified. MAX ENGAGEMENT:
-- HOOK in 3 seconds — something SHOCKING or "wait WHAT?"
-- Every SINGLE SENTENCE must earn the next second. Zero filler.
-- Use dramatic reveals: "But HERE'S the part that broke my brain..."
+- HOOK with the CONSEQUENCE or WEIRD THING first — NOT the setup. Don't say "You walk into a restaurant." Say "A waiter just CHASED a tourist down the street — to RETURN his money."
+- Every SINGLE SENTENCE must earn the next second. Zero filler. Zero predictability.
+- Use dramatic reveals: "But HERE'S what no one tells you..."
 - Short. Punchy. Sentences. Like. This.
 - Emotional rollercoaster: shock → curiosity → "no way" → mind blown → satisfying twist
-- End with a mic-drop that makes people SHARE
 - Use original Asian terms (omotenashi, pantang, feng shui) but always explain them
 - Keep language CLEAN — no words like "insult", "offensive", "angry" (image AI flags these)
+- TWIST every ~30 seconds. A 1-min video needs at least 2 "wait what" moments.
 
-AUDIENCE: Asian diaspora + culturally curious. They scroll fast. 3 seconds to hook them.
+AUDIENCE: Asian diaspora + culturally curious. They scroll fast. 1 second to hook them.
 
 FORMAT: 1-MINUTE VIDEO. ~150-170 words TOTAL. Every word must earn its place.
 
 CRITICAL RULE — EACH SECTION = ONE SENTENCE (10-20 words max).
 This is because EVERY section gets its OWN image. More sections = more visual cuts = more engaging.
-We want images changing every 2-3 seconds. So write 10-12 sections, each just ONE punchy sentence.
+We want images changing every 2-3 seconds. So write 12-14 sections, each just ONE punchy sentence.
 
 ALREADY COVERED (do NOT repeat):
 {done_str}
 
 Pick ONE topic: an everyday habit, superstition, or tradition with a WILD explanation.
 
-Structure: 10-12 sections. Each = ONE sentence + visual_notes for that moment.
-- hook_1 through hook_4: Build a vivid scenario that creates instant curiosity
-- origin_1 through origin_4: The surprising WHY. Drop reveals one by one.
-- twist_1 through twist_4: Mind-blowing reframe. Last section ends with "Your grandma's rules — finally explained."
+Structure: 12-14 sections. Each = ONE sentence + visual_notes for that moment.
+- hook_1 through hook_3: Open with the SHOCKING consequence or contradiction. NOT the backstory. The viewer should think "wait WHAT?" within 3 seconds.
+- build_1 through build_3: Context that makes them care — but each fact more surprising than the last. Never explain the obvious.
+- twist_1 through twist_3: First "no way" moment at ~30 seconds. Flip everything they assumed.
+- payoff_1 through payoff_3: The REAL answer. Mind-blow. Make them want to share.
+- close_1 through close_2: Satisfying reframe + callback to the hook. LAST section MUST end with the tagline: "Your grandma's rules — finally explained."
 
-Each visual_notes should describe ONE clear scene — character doing something specific with specific objects.
-Keep visual_notes CLEAN — no negative emotions, no conflict words. Describe poses and objects only.
+UNPREDICTABILITY RULES:
+- Never follow a question with its obvious answer
+- Never follow a negative with a positive (or vice versa) predictably
+- Each sentence should raise a NEW question the viewer didn't expect
+- Use contrasts: "Americans do X. Japanese do the OPPOSITE."
+- Use numbers for shock: specific stats, comparisons, amounts
+
+Each visual_notes should describe ONE clear scene with MULTIPLE characters if relevant, specific objects, and a specific background/setting. Keep subjects CENTERED in the frame (important for vertical crop to Reels). Keep visual_notes CLEAN — no negative emotions, no conflict words. Describe poses and objects only.
 
 Return ONLY valid JSON:
 {{
@@ -118,13 +128,13 @@ Return ONLY valid JSON:
   "sections": [
     {{
       "id": "hook_1",
-      "narration": "One punchy sentence (10-20 words).",
-      "visual_notes": "Boy doing X with Y object, Z expression"
+      "narration": "One punchy sentence — the SHOCKING thing, not the setup (10-20 words).",
+      "visual_notes": "Centered: boy and waiter in restaurant, specific objects, specific expressions"
     }},
     {{
       "id": "hook_2",
-      "narration": "Next punchy sentence.",
-      "visual_notes": "Boy in different pose with different objects"
+      "narration": "Next surprising sentence — unpredictable follow-up.",
+      "visual_notes": "Centered: different characters, different setting, different action"
     }}
   ]
 }}

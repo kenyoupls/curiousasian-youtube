@@ -41,6 +41,7 @@ SCENE DESCRIPTION RULES:
 - You CAN include MULTIPLE characters (waiter + boy, doctor + boy, taxi driver, etc.)
 - You CAN include varied backgrounds (sushi bar, street, split screen, etc.)
 - You CAN include props, objects, speech bubbles, text overlays, icons
+- CRITICAL: Keep all important subjects CENTERED in the middle 60% of the frame. No key characters or objects at the left/right edges. This is for vertical crop compatibility (Reels/TikTok).
 - Do NOT include style instructions (no "flat 2D", "thick outlines", "cartoon style", "solid colors", "minimalist" etc.) — the template handles ALL style
 - Keep descriptions SAFE — no violence, weapons, blood, nudity, or strong emotion words like "angry", "offensive", "insulted", "fighting". Use neutral alternatives (serious, surprised, debating)
 - MAX 100 characters per scene description

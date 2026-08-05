@@ -76,7 +76,7 @@ GOOGLE_TTS_API_KEY = os.environ.get("GEMINI_TTS_API_KEY", "")
 
 # ── Telegram ───────────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "")
+TELEGRAM_CHAT_ID = os.environ.get("TELEGRAM_CHAT_ID", "834454829")
 
 # ── Script queue ───────────────────────────────────────────────────
 SCRIPT_LOW_THRESHOLD = 7  # Alert when fewer than this many scripts remain
