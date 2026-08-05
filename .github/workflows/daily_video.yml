@@ -43,7 +43,6 @@ jobs:
           GEMINI_TTS_API_KEY: ${{ secrets.GEMINI_TTS_API_KEY }}
           GEMINI_VOICE_KEY: ${{ secrets.GEMINI_VOICE_KEY }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           python -u -m src.pipeline
 
