@@ -79,7 +79,7 @@ def _generate_gemini_backup_script() -> dict:
 
     prompt = f"""You are a scriptwriter for "CuriousAsian", a YouTube channel that explains Asian cultural habits, traditions, and superstitions in a way that's entertaining, educational, and impossible to stop watching.
 
-STYLE: Hybrid — Ink Explainer's immersive "you are there" storytelling hooks + MrBeast's fast-paced reveals and pattern interruptions.
+STYLE: Hybrid — Ink Explainer's immersive "you are there" storytelling hooks + MrBeast's fast-paced reveals.
 
 GOLDEN RULE: The viewer must NEVER predict the next sentence. Every line must surprise, contradict, or shift the angle. If a viewer can finish your sentence — you've lost them.
 
@@ -95,36 +95,27 @@ ENERGY — MrBeast meets OverSimplified:
 - Emotional rollercoaster: immersion → shock → curiosity → "no way" → mind blown → satisfying twist
 - Use original Asian terms (omotenashi, pantang, feng shui) but always explain them
 - Keep language CLEAN — no words like "insult", "offensive", "angry" (image AI flags these)
-- Pattern interruptions every ~45s: sudden questions, unexpected analogies, "wait it gets worse", number drops
-- TWIST every ~60 seconds. An 8-min video needs at least 6 "wait what" moments.
+- TWIST every ~30 seconds. A 1-min video needs at least 2 "wait what" moments.
 
-AUDIENCE: Asian diaspora + culturally curious. Hook them in 3 seconds or they leave.
+AUDIENCE: Asian diaspora + culturally curious. They scroll fast. 1 second to hook them.
 
-FORMAT: 5-8 MINUTE VIDEO. 800-1200 words TOTAL. Every word must earn its place.
+FORMAT: 1-MINUTE VIDEO. ~150-170 words TOTAL. Every word must earn its place.
 
-CRITICAL RULE — EACH SECTION = ONE SENTENCE (10-25 words max).
+CRITICAL RULE — EACH SECTION = ONE SENTENCE (10-20 words max).
 EVERY section gets its OWN image. More sections = more visual cuts = more engaging.
-Images change every 2-4 seconds. Write 50-70 sections, each just ONE punchy sentence.
+We want images changing every 2-3 seconds. So write 12-14 sections, each just ONE punchy sentence.
 
 ALREADY COVERED (do NOT repeat):
 {done_str}
 
-Pick ONE topic: an everyday habit, superstition, or tradition with a WILD deep-dive explanation. Go DEEP — history, psychology, science, comparisons across cultures. This is an 8-min video, not a short.
+Pick ONE topic: an everyday habit, superstition, or tradition with a WILD explanation.
 
-Structure: 50-70 sections. Each = ONE sentence + visual_notes.
-
-SECTION IDS AND FLOW:
-- hook_1 through hook_5: IMMERSIVE opening (Ink Explainer style). Put viewer IN the scene. Then SNAP to the shocking consequence. Think "you're standing there when..." followed by "wait WHAT?"
-- build_1 through build_8: Context that makes them CARE. Each fact more surprising than the last. Layer the mystery. Use "here's what most people don't realize..."
-- twist_1 through twist_5: First major "NO WAY" moment (~60s). Flip everything they assumed. This is where gasps happen.
-- build_4 through build_10: Go DEEPER. Historical roots. Scientific reasons. Cross-cultural comparisons. "In Korea, they do X. In Japan, the OPPOSITE. In China? Something nobody expected."
-- twist_2_1 through twist_2_5: Second major twist (~2 min). An even bigger revelation. "But here's what NOBODY talks about..."
-- build_11 through build_15: More layers. Psychology. Evolution. Modern consequences. Pattern interrupt with a wild analogy or number drop.
-- twist_3_1 through twist_3_3: Third twist (~3.5 min). Connect dots the viewer didn't see coming.
-- build_16 through build_20: The rabbit hole goes DEEPER. Unexpected connections to other cultures/traditions.
-- twist_4_1 through twist_4_3: Fourth twist (~5 min). "And THAT's why your grandma..."
-- payoff_1 through payoff_8: The REAL answer. Mind-blowing synthesis. Everything clicks together. Make them want to share.
-- close_1 through close_3: Satisfying reframe + callback to the hook. LAST section MUST end with the tagline: "Your grandma's rules — finally explained."
+Structure: 12-14 sections. Each = ONE sentence + visual_notes for that moment.
+- hook_1 through hook_3: IMMERSIVE opening (Ink Explainer style). Put viewer IN the scene. Then SNAP to the shocking consequence. The viewer should think "wait WHAT?" within 3 seconds.
+- build_1 through build_3: Context that makes them care — but each fact more surprising than the last. Never explain the obvious.
+- twist_1 through twist_3: First "no way" moment at ~30 seconds. Flip everything they assumed.
+- payoff_1 through payoff_3: The REAL answer. Mind-blow. Make them want to share.
+- close_1 through close_2: Satisfying reframe + callback to the hook. LAST section MUST end with the tagline: "Your grandma's rules — finally explained."
 
 UNPREDICTABILITY RULES:
 - Never follow a question with its obvious answer
@@ -132,8 +123,6 @@ UNPREDICTABILITY RULES:
 - Each sentence should raise a NEW question the viewer didn't expect
 - Use contrasts: "Americans do X. Japanese do the OPPOSITE."
 - Use numbers for shock: specific stats, comparisons, amounts
-- Every 45 seconds: pattern interrupt (sudden question, analogy, "wait it gets worse", callback)
-- Use cliffhangers between sections: end one idea mid-thought to keep them watching
 
 VISUAL NOTES RULES:
 - The main character is ALWAYS a boy with round head, dot eyes, line mouth, messy brown hair, stick body
@@ -141,7 +130,7 @@ VISUAL NOTES RULES:
 - Specific objects, specific background/setting, warm earth-toned colors
 - Keep subjects CENTERED in the frame (for vertical crop to Reels/TikTok)
 - CLEAN — no negative emotions, no conflict words. Describe poses and objects only.
-- Max 120 characters per visual_notes
+- Max 100 characters per visual_notes
 
 Return ONLY valid JSON:
 {{
@@ -151,7 +140,7 @@ Return ONLY valid JSON:
   "sections": [
     {{
       "id": "hook_1",
-      "narration": "One punchy sentence (10-25 words).",
+      "narration": "One punchy sentence — the SHOCKING thing, not the setup (10-20 words).",
       "visual_notes": "Centered: boy in specific setting, specific objects, warm background"
     }}
   ]
