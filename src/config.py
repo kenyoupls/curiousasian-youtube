@@ -38,7 +38,7 @@ CHANNEL_TAGLINE = "Your grandma's rules, finally explained."
 VIDEO_WIDTH = 1920
 VIDEO_HEIGHT = 1080
 VIDEO_FPS = 30
-IMAGE_DURATION = 4  # seconds per image — fits within 20 RPD Gemini limit
+IMAGE_DURATION = 2.5  # seconds per image — fast cuts for engagement
 
 # ── Image style ────────────────────────────────────────────────────
 IMAGE_STYLE = (

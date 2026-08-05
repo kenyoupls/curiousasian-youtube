@@ -98,7 +98,7 @@ def _concat_clips(clip_paths: list[Path], output_path: Path) -> Path:
     return output_path
 
 
-def _generate_intro_bumper(output_path: Path, duration: float = 2.5) -> Path:
+def _generate_intro_bumper(output_path: Path, duration: float = 1.5) -> Path:
     """Intro bumper: dark background, channel name, tagline. Includes silent audio."""
     intro_img = output_path.with_suffix(".png")
 
@@ -145,7 +145,7 @@ def _generate_intro_bumper(output_path: Path, duration: float = 2.5) -> Path:
     return output_path
 
 
-def _generate_end_screen(output_path: Path, duration: float = 5.0) -> Path:
+def _generate_end_screen(output_path: Path, duration: float = 3.0) -> Path:
     """End screen: subscribe CTA + channel branding. Includes silent audio."""
     end_img = output_path.with_suffix(".png")
 
@@ -276,7 +276,7 @@ def build_video(script: dict, image_paths: list[Path],
 
     section_video_paths = []
     section_timestamps = [0.0]
-    cumulative_time = 2.5  # after intro
+    cumulative_time = 1.5  # after intro
 
     for sec_idx, audio_seg in enumerate(audio_segments):
         section_vid = section_vids_dir / f"section_{sec_idx:02d}.mp4"

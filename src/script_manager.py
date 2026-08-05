@@ -77,53 +77,54 @@ def _generate_gemini_backup_script() -> dict:
 
     done_str = "\n".join(f"- {t}" for t in done_topics[-50:]) if done_topics else "None"
 
-    prompt = f"""You are a scriptwriter for "CuriousAsian", a YouTube Shorts / 1-minute explainer channel about cultural habits, superstitions, and traditions.
+    prompt = f"""You are a scriptwriter for "CuriousAsian", a viral YouTube channel that explains cultural habits and traditions.
 
-ENERGY & TONE — MrBeast meets OverSimplified:
-- HOOK HARD in the first 5 seconds — something shocking, funny, or "wait WHAT?"
-- Every sentence must earn the next second of attention
-- Use dramatic reveals: "And THAT'S when it gets crazy..."
-- Short punchy sentences. No filler. No "in this video we'll explore..."
-- Emotional rollercoaster: shock → curiosity → "mind blown" → satisfying twist
-- End with a mic-drop moment that makes people want to share
-- English narration, uses original Asian terms (feng shui, omotenashi, pantang) but always explains them
+ENERGY — MrBeast meets OverSimplified. MAX ENGAGEMENT:
+- HOOK in 3 seconds — something SHOCKING or "wait WHAT?"
+- Every SINGLE SENTENCE must earn the next second. Zero filler.
+- Use dramatic reveals: "But HERE'S the part that broke my brain..."
+- Short. Punchy. Sentences. Like. This.
+- Emotional rollercoaster: shock → curiosity → "no way" → mind blown → satisfying twist
+- End with a mic-drop that makes people SHARE
+- Use original Asian terms (omotenashi, pantang, feng shui) but always explain them
+- Keep language CLEAN — no words like "insult", "offensive", "angry" (image AI flags these)
 
-AUDIENCE: Asian diaspora + culturally curious viewers. They scroll fast — you have 3 seconds to hook them.
+AUDIENCE: Asian diaspora + culturally curious. They scroll fast. 3 seconds to hook them.
 
-FORMAT: 1-MINUTE VIDEO (~150-170 words total narration). This is SHORT. Every word counts.
+FORMAT: 1-MINUTE VIDEO. ~150-170 words TOTAL. Every word must earn its place.
+
+CRITICAL RULE — EACH SECTION = ONE SENTENCE (10-20 words max).
+This is because EVERY section gets its OWN image. More sections = more visual cuts = more engaging.
+We want images changing every 2-3 seconds. So write 10-12 sections, each just ONE punchy sentence.
 
 ALREADY COVERED (do NOT repeat):
 {done_str}
 
-Pick ONE topic: an everyday habit, superstition, or tradition that sounds boring but has a WILD explanation behind it.
+Pick ONE topic: an everyday habit, superstition, or tradition with a WILD explanation.
 
-Structure: exactly 3 sections. Each section = ~50-60 words.
-- "hook": Open with a scenario that creates instant curiosity or shock. Paint a vivid picture. Make the viewer say "wait, really?"
-- "origin": The surprising WHY behind it. Historical, scientific, or cultural. Build curiosity, drop a reveal.
-- "twist": The mind-blowing reframe. Flip the viewer's assumption. End with the channel tagline: "Your grandma's rules — finally explained."
+Structure: 10-12 sections. Each = ONE sentence + visual_notes for that moment.
+- hook_1 through hook_4: Build a vivid scenario that creates instant curiosity
+- origin_1 through origin_4: The surprising WHY. Drop reveals one by one.
+- twist_1 through twist_4: Mind-blowing reframe. Last section ends with "Your grandma's rules — finally explained."
 
-Each section should have 2-3 clear visual moments described in visual_notes.
+Each visual_notes should describe ONE clear scene — character doing something specific with specific objects.
+Keep visual_notes CLEAN — no negative emotions, no conflict words. Describe poses and objects only.
 
 Return ONLY valid JSON:
 {{
   "title": "YouTube title (compelling, under 70 chars, use CAPS for one key word)",
-  "description": "YouTube description (short + engagement question)",
+  "description": "Short YouTube description + engagement question",
   "tags": ["tag1", "tag2", "CuriousAsian"],
   "sections": [
     {{
-      "id": "hook",
-      "narration": "50-60 words of high-energy narration...",
-      "visual_notes": "Scene 1: ... Scene 2: ... Scene 3: ..."
+      "id": "hook_1",
+      "narration": "One punchy sentence (10-20 words).",
+      "visual_notes": "Boy doing X with Y object, Z expression"
     }},
     {{
-      "id": "origin",
-      "narration": "50-60 words...",
-      "visual_notes": "Scene 1: ... Scene 2: ..."
-    }},
-    {{
-      "id": "twist",
-      "narration": "50-60 words ending with mic-drop...",
-      "visual_notes": "Scene 1: ... Scene 2: ... Scene 3: subscribe button"
+      "id": "hook_2",
+      "narration": "Next punchy sentence.",
+      "visual_notes": "Boy in different pose with different objects"
     }}
   ]
 }}

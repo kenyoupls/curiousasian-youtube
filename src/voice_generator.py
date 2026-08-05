@@ -20,8 +20,8 @@ GOOGLE_TTS_URL = "https://texttospeech.googleapis.com/v1/text:synthesize"
 # Other options: en-US-Neural2-F (female), en-US-Neural2-J (male casual)
 GOOGLE_TTS_VOICE = "en-US-Neural2-D"
 GOOGLE_TTS_LANGUAGE = "en-US"
-GOOGLE_TTS_SPEAKING_RATE = 1.15  # faster for MrBeast-style punchy delivery
-GOOGLE_TTS_PITCH = 0.0  # neutral pitch — let SSML emphasis do the dynamics
+GOOGLE_TTS_SPEAKING_RATE = 1.25  # fast MrBeast energy — no dead air
+GOOGLE_TTS_PITCH = 1.0  # slightly higher = more energetic and young
 
 
 # ── Pause markers ─────────────────────────────────────────────────────
@@ -66,8 +66,8 @@ EMPHASIS_WORDS = [
     r"living wage",
 ]
 
-DRAMATIC_PAUSE_MS = 500   # slightly tighter for 1-min format
-SECTION_END_PAUSE_MS = 350
+DRAMATIC_PAUSE_MS = 350   # tight pauses — just enough for impact, not boredom
+SECTION_END_PAUSE_MS = 250  # barely any gap between sections — keeps momentum
 
 
 def _build_ssml(text: str) -> str:
