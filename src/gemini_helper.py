@@ -89,35 +89,52 @@ def generate_text(prompt):
     raise RuntimeError(f"All Gemini text models failed: {last_err[:200] if last_err else 'unknown'}")
 
 
+_voice_key_index = 0
+_exhausted_voice_keys = set()  # keys that hit daily quota — skip until next run
+
+
 def generate_speech(text, voice_name="Kore", temperature=1.0):
     """Generate speech audio via Gemini TTS (gemini-2.5-flash-preview-tts).
 
     Returns raw PCM audio bytes (24kHz, mono, 16-bit little-endian).
-    Uses dedicated GEMINI_VOICE_KEY (separate quota from text calls).
-    Falls back to shared keys if dedicated key not set.
+    Rotates through dedicated GEMINI_VOICE_KEYS (separate quota from text calls).
+    Falls back to shared keys if no dedicated keys set.
 
     Args:
         text: Text to speak. Can include emotion cues like [excitedly], [whispers], etc.
         voice_name: One of Gemini's 30 prebuilt voices (default: Kore — warm male).
         temperature: Controls expressiveness (0.0-2.0, default 1.0).
     """
-    from src.config import GEMINI_VOICE_KEY
+    global _voice_key_index
+    from src.config import GEMINI_VOICE_KEYS
     _log_key_info()
     last_err = None
 
     tts_model = "gemini-2.5-flash-preview-tts"
 
-    # Use dedicated voice key if available, otherwise fall back to shared keys
-    if GEMINI_VOICE_KEY:
-        tts_keys = [GEMINI_VOICE_KEY]
-    else:
-        tts_keys = GEMINI_API_KEYS
+    # Use dedicated voice keys if available, otherwise fall back to shared keys
+    tts_keys = GEMINI_VOICE_KEYS if GEMINI_VOICE_KEYS else GEMINI_API_KEYS
 
-    for rnd in range(1, 5):  # 4 rounds with backoff
-        keys_tried = 0
-        while keys_tried < max(len(tts_keys), 1):
-            client = genai.Client(api_key=tts_keys[keys_tried % len(tts_keys)] if tts_keys else "")
-            keys_tried += 1
+    if not tts_keys:
+        raise RuntimeError("No API keys available for TTS")
+
+    # Filter out exhausted keys
+    available_keys = [k for k in tts_keys if k not in _exhausted_voice_keys]
+    if not available_keys:
+        raise RuntimeError(
+            f"All {len(tts_keys)} TTS keys exhausted (daily quota). "
+            f"Falling back to Google TTS."
+        )
+
+    print(f"    🔑 TTS keys: {len(available_keys)}/{len(tts_keys)} available")
+
+    # Try each available key once, then one retry round with 30s wait
+    for rnd in range(2):
+        for i in range(len(available_keys)):
+            key_idx = (_voice_key_index + i) % len(available_keys)
+            key = available_keys[key_idx]
+            client = genai.Client(api_key=key)
+
             try:
                 resp = client.models.generate_content(
                     model=tts_model,
@@ -140,8 +157,9 @@ def generate_speech(text, voice_name="Kore", temperature=1.0):
                         and resp.candidates[0].content.parts):
                     part = resp.candidates[0].content.parts[0]
                     if hasattr(part, 'inline_data') and part.inline_data:
-                        if rnd == 1:
-                            print(f"    ✅ TTS: {tts_model} (voice={voice_name})")
+                        # Success — rotate to next key for next call
+                        _voice_key_index = (key_idx + 1) % len(available_keys)
+                        print(f"    ✅ TTS: {tts_model} (key {key_idx+1}/{len(available_keys)})")
                         return part.inline_data.data
                 raise RuntimeError("No audio data in TTS response")
 
@@ -149,19 +167,27 @@ def generate_speech(text, voice_name="Kore", temperature=1.0):
                 err = str(e)
                 last_err = err
                 if _is_auth_error(err):
-                    key_prefix = tts_keys[(keys_tried - 1) % len(tts_keys)][:8] if tts_keys else "?"
-                    print(f"    ⚠️  Key {key_prefix}... auth failed on TTS, trying next...")
+                    print(f"    ⚠️  Key {key[:8]}... auth failed, trying next...")
                     continue
                 elif _is_overloaded(err):
-                    wait = 60 + random.uniform(0, 5)  # full 60s cooldown on 429
-                    print(f"    ⚠️  TTS rate limited [{rnd}/4], waiting {wait:.0f}s...")
-                    time.sleep(wait)
-                    break
+                    # Mark this key as exhausted (daily quota)
+                    _exhausted_voice_keys.add(key)
+                    print(f"    ⚠️  Key {key[:8]}... quota exhausted, {len(available_keys) - len(_exhausted_voice_keys & set(available_keys))} keys left")
+                    continue  # Try next key immediately
                 elif "404" in err:
                     break
                 else:
                     print(f"    ⚠️  TTS error: {err[:200]}")
-                    break
+                    continue
+
+        # After trying all keys once, wait 30s and retry remaining keys
+        remaining = [k for k in available_keys if k not in _exhausted_voice_keys]
+        if rnd == 0 and remaining:
+            print(f"    ⏳ All keys tried, waiting 30s before retry ({len(remaining)} keys left)...")
+            time.sleep(30)
+            available_keys = remaining
+        else:
+            break
 
     raise RuntimeError(f"Gemini TTS failed: {last_err[:200] if last_err else 'unknown'}")
 

@@ -74,8 +74,10 @@ CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
 # ── Google Cloud TTS ──────────────────────────────────────────────
 GOOGLE_TTS_API_KEY = os.environ.get("GEMINI_TTS_API_KEY", "")
 
-# ── Gemini TTS (dedicated key for voice, separate quota from text) ─
-GEMINI_VOICE_KEY = os.environ.get("GEMINI_VOICE_KEY", "")
+# ── Gemini TTS (dedicated keys for voice, separate quota from text) ─
+# Supports multiple comma-separated keys for quota rotation
+_voice_key_str = os.environ.get("GEMINI_VOICE_KEY", "")
+GEMINI_VOICE_KEYS = [k.strip() for k in _voice_key_str.split(",") if k.strip()]
 
 # ── Telegram ───────────────────────────────────────────────────────
 TELEGRAM_BOT_TOKEN = os.environ.get("TELEGRAM_BOT_TOKEN", "")
