@@ -18,7 +18,10 @@ def _api_url(method: str) -> str:
 
 def _is_configured() -> bool:
     if not TELEGRAM_BOT_TOKEN or not TELEGRAM_CHAT_ID:
-        print("  ⚠️  Telegram not configured — skipping notification")
+        token_len = len(TELEGRAM_BOT_TOKEN) if TELEGRAM_BOT_TOKEN else 0
+        chat_id_len = len(TELEGRAM_CHAT_ID) if TELEGRAM_CHAT_ID else 0
+        print(f"  ⚠️  Telegram not configured — skipping notification")
+        print(f"       TOKEN length={token_len}, CHAT_ID length={chat_id_len}")
         return False
     return True
 
