@@ -145,7 +145,7 @@ def generate_speech(text, voice_name="Kore", temperature=1.0):
                     print(f"    ⚠️  Key {key_prefix}... auth failed on TTS, trying next...")
                     continue
                 elif _is_overloaded(err):
-                    wait = 20 * rnd + random.uniform(0, 3)
+                    wait = 60 + random.uniform(0, 5)  # full 60s cooldown on 429
                     print(f"    ⚠️  TTS rate limited [{rnd}/4], waiting {wait:.0f}s...")
                     time.sleep(wait)
                     break

@@ -29,7 +29,7 @@ GOOGLE_TTS_LANGUAGE = "en-US"
 
 # ── Gemini TTS config ────────────────────────────────────────────────
 GEMINI_TTS_VOICE = "Kore"  # Warm, engaging male voice
-GEMINI_TTS_RATE_LIMIT = 21  # seconds between calls (free tier: 3 RPM)
+GEMINI_TTS_RATE_LIMIT = 25  # seconds between calls (free tier: 3 RPM, stay well under)
 _last_gemini_tts_call = 0.0
 
 # ── Section-specific emotion profiles ────────────────────────────────
