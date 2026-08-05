@@ -14,6 +14,7 @@ import json
 import re
 import struct
 import subprocess
+import time
 import wave
 from pathlib import Path
 import requests
@@ -28,6 +29,8 @@ GOOGLE_TTS_LANGUAGE = "en-US"
 
 # ── Gemini TTS config ────────────────────────────────────────────────
 GEMINI_TTS_VOICE = "Kore"  # Warm, engaging male voice
+GEMINI_TTS_RATE_LIMIT = 21  # seconds between calls (free tier: 3 RPM)
+_last_gemini_tts_call = 0.0
 
 # ── Section-specific emotion profiles ────────────────────────────────
 # Each section type gets emotion cues for Gemini TTS + rate/pitch for Google TTS fallback.
@@ -229,7 +232,15 @@ def get_audio_duration(audio_path: Path) -> float:
 
 def _generate_gemini_tts(text: str, output_path: Path, section_id: str = ""):
     """Generate audio using Gemini TTS with emotion cues per section."""
+    global _last_gemini_tts_call
     from src.gemini_helper import generate_speech
+
+    # Proactive rate limiting — space calls 21s apart to avoid 429
+    wait = GEMINI_TTS_RATE_LIMIT - (time.time() - _last_gemini_tts_call)
+    if wait > 0:
+        print(f"    ⏳ TTS rate limit: waiting {wait:.0f}s...")
+        time.sleep(wait)
+    _last_gemini_tts_call = time.time()
 
     profile = _get_voice_profile(section_id)
 
