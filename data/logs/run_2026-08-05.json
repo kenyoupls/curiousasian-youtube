@@ -1,29 +1,29 @@
 {
-  "started_at": "2026-08-05T08:40:29.266932",
+  "started_at": "2026-08-05T09:18:55.113031",
   "steps": {
     "script": {
       "title": "Why Japanese People NEVER Tip",
       "source": "claude",
-      "sections": 12
+      "sections": 13
     },
     "audio": {
-      "segments": 12,
-      "total_seconds": 56.2
+      "segments": 13,
+      "total_seconds": 54.9
     },
-    "image_prompts": 21,
-    "images": 21,
+    "image_prompts": 23,
+    "images": 23,
     "audio_production": {
       "sfx": [
         "whoosh",
         "dramatic_hit",
         "ding"
       ],
-      "music_duration": 66.2
+      "music_duration": 64.9
     },
     "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4"
   },
   "status": "success",
   "skipped_scripts": [],
-  "completed_at": "2026-08-05T08:42:09.826337",
-  "total_duration_seconds": 56.2
+  "completed_at": "2026-08-05T09:20:39.021416",
+  "total_duration_seconds": 54.9
 }
