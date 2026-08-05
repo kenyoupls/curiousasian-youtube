@@ -20,11 +20,12 @@ GOOGLE_TTS_URL = "https://texttospeech.googleapis.com/v1/text:synthesize"
 # Other options: en-US-Neural2-F (female), en-US-Neural2-J (male casual)
 GOOGLE_TTS_VOICE = "en-US-Neural2-D"
 GOOGLE_TTS_LANGUAGE = "en-US"
-GOOGLE_TTS_SPEAKING_RATE = 1.05  # slightly faster for engaging delivery
-GOOGLE_TTS_PITCH = -1.0  # slightly lower for authority
+GOOGLE_TTS_SPEAKING_RATE = 1.15  # faster for MrBeast-style punchy delivery
+GOOGLE_TTS_PITCH = 0.0  # neutral pitch — let SSML emphasis do the dynamics
 
 
 # ── Pause markers ─────────────────────────────────────────────────────
+# ── Pause markers — dramatic beats before reveals ────────────────────
 PAUSE_BEFORE = [
     r"but here's",
     r"and here's",
@@ -43,9 +44,15 @@ PAUSE_BEFORE = [
     r"and that should",
     r"that's not",
     r"because ",
+    r"and the reason",
+    r"it's gonna",
+    r"meanwhile",
+    r"so which",
+    r"that same tip",
+    r"in japan",
 ]
 
-# Words to emphasize
+# Words to emphasize — punchy MrBeast-style stress
 EMPHASIS_WORDS = [
     r"never", r"always", r"every", r"nothing", r"everything",
     r"actually", r"literally", r"exactly", r"superior", r"inferior",
@@ -53,10 +60,14 @@ EMPHASIS_WORDS = [
     r"not", r"don't", r"can't", r"won't", r"isn't", r"wasn't",
     r"wrong", r"right", r"real", r"fake", r"true", r"false",
     r"secret", r"hidden", r"ancient", r"sacred",
+    r"insane", r"offensive", r"insulted", r"broken", r"wild",
+    r"best", r"worst", r"biggest", r"craziest",
+    r"chases", r"sprinting", r"flips",
+    r"living wage",
 ]
 
-DRAMATIC_PAUSE_MS = 600
-SECTION_END_PAUSE_MS = 400
+DRAMATIC_PAUSE_MS = 500   # slightly tighter for 1-min format
+SECTION_END_PAUSE_MS = 350
 
 
 def _build_ssml(text: str) -> str:

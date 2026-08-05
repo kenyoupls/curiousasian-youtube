@@ -77,58 +77,53 @@ def _generate_gemini_backup_script() -> dict:
 
     done_str = "\n".join(f"- {t}" for t in done_topics[-50:]) if done_topics else "None"
 
-    prompt = f"""You are a scriptwriter for "CuriousAsian", a YouTube channel that explains everyday cultural habits, superstitions, and traditions.
+    prompt = f"""You are a scriptwriter for "CuriousAsian", a YouTube Shorts / 1-minute explainer channel about cultural habits, superstitions, and traditions.
 
-BRAND VOICE:
-- Curious storyteller — warm, fascinated, sharing discoveries with a friend
-- Fast-paced, punchy, value-dense — no filler
-- English narration, uses original Asian terms (feng shui, pantang, etc.) but always explains them
-- Preserve and respect traditions — explain the real origin
-- Light and fun, not lecture-y
+ENERGY & TONE — MrBeast meets OverSimplified:
+- HOOK HARD in the first 5 seconds — something shocking, funny, or "wait WHAT?"
+- Every sentence must earn the next second of attention
+- Use dramatic reveals: "And THAT'S when it gets crazy..."
+- Short punchy sentences. No filler. No "in this video we'll explore..."
+- Emotional rollercoaster: shock → curiosity → "mind blown" → satisfying twist
+- End with a mic-drop moment that makes people want to share
+- English narration, uses original Asian terms (feng shui, omotenashi, pantang) but always explains them
 
-AUDIENCE: Asian diaspora — people who grew up between cultures
+AUDIENCE: Asian diaspora + culturally curious viewers. They scroll fast — you have 3 seconds to hook them.
 
-VISUAL STYLE: One recurring stick figure character (like OverSimplified YouTube channel). Round white head, dot eyes, messy hair, simple clothing. The character appears in EVERY scene with different objects/context around them.
+FORMAT: 1-MINUTE VIDEO (~150-170 words total narration). This is SHORT. Every word counts.
 
 ALREADY COVERED (do NOT repeat):
 {done_str}
 
-Pick ONE topic: an everyday habit, superstition, or tradition that most people follow but never questioned WHY.
+Pick ONE topic: an everyday habit, superstition, or tradition that sounds boring but has a WILD explanation behind it.
 
-Write a complete video script. IMPORTANT: Each section should be SHORT — just 1-2 sentences of narration. This makes each section sync to exactly one image/scene.
+Structure: exactly 3 sections. Each section = ~50-60 words.
+- "hook": Open with a scenario that creates instant curiosity or shock. Paint a vivid picture. Make the viewer say "wait, really?"
+- "origin": The surprising WHY behind it. Historical, scientific, or cultural. Build curiosity, drop a reveal.
+- "twist": The mind-blowing reframe. Flip the viewer's assumption. End with the channel tagline: "Your grandma's rules — finally explained."
 
-Structure your sections like this (use these EXACT section IDs):
-- hook_1, hook_2 (2-3 short punchy sentences, split into separate sections)
-- fear_1, fear_2, fear_3 (what people believe will happen — split per idea)
-- origin_1, origin_2, origin_3, origin_4 (where the tradition came from)
-- science_1, science_2 (scientific or practical explanation)
-- world_1, world_2 (how other cultures handle it)
-- twist_1, twist_2 (something unexpected)
-- verdict_1, verdict_2 (what it really means, empower the viewer)
-
-Each section gets ONE image, so each narration should describe ONE clear visual moment.
-
-Total narration: 800-1100 words across all sections.
-
-For each section, include:
-- "narration": 1-2 sentences (what the narrator says)
-- "visual_notes": Brief description of what to show (stick figure + context/objects)
+Each section should have 2-3 clear visual moments described in visual_notes.
 
 Return ONLY valid JSON:
 {{
-  "title": "YouTube title (compelling, under 70 chars)",
-  "description": "YouTube description (2-3 paragraphs + engagement question)",
-  "tags": ["tag1", "tag2"],
+  "title": "YouTube title (compelling, under 70 chars, use CAPS for one key word)",
+  "description": "YouTube description (short + engagement question)",
+  "tags": ["tag1", "tag2", "CuriousAsian"],
   "sections": [
     {{
-      "id": "hook_1",
-      "narration": "One or two sentences...",
-      "visual_notes": "Stick figure character with X object, Y background"
+      "id": "hook",
+      "narration": "50-60 words of high-energy narration...",
+      "visual_notes": "Scene 1: ... Scene 2: ... Scene 3: ..."
     }},
     {{
-      "id": "hook_2",
-      "narration": "Next sentence...",
-      "visual_notes": "Stick figure character doing Z"
+      "id": "origin",
+      "narration": "50-60 words...",
+      "visual_notes": "Scene 1: ... Scene 2: ..."
+    }},
+    {{
+      "id": "twist",
+      "narration": "50-60 words ending with mic-drop...",
+      "visual_notes": "Scene 1: ... Scene 2: ... Scene 3: subscribe button"
     }}
   ]
 }}
