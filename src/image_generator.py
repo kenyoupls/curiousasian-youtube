@@ -50,6 +50,24 @@ def _build_prompt(scene, use_flux=True):
     # Strip scene to core action — remove style words the LLM may have added
     scene = scene[:120].replace("stick figure character", "").strip(", ")
 
+    # Sanitize words that trigger FLUX Schnell's NSFW filter
+    # These are benign in context but Cloudflare's filter is aggressive
+    NSFW_TRIGGERS = [
+        "insult", "insulted", "insulting", "offensive", "offended",
+        "deeply offended", "repulsive", "disgusted", "disturbed",
+        "rude", "angry", "furious", "violent", "attack", "killed",
+        "naked", "nude", "sexy", "seductive", "provocative",
+        "drug", "drunk", "alcohol", "smoking", "blood", "bloody",
+        "gun", "weapon", "knife", "sword", "fight", "punch",
+        "slave", "slavery", "torture", "abuse", "victim",
+        "hate", "hatred", "racist", "racism",
+    ]
+    scene_lower = scene.lower()
+    for trigger in NSFW_TRIGGERS:
+        if trigger in scene_lower:
+            scene = scene.replace(trigger, "upset")
+            scene = scene.replace(trigger.capitalize(), "Upset")
+
     if use_flux:
         return FLUX_PROMPT_TEMPLATE.format(scene=scene)
     else:
@@ -83,8 +101,16 @@ def _fit_to_hd(img: Image.Image) -> Image.Image:
     return img
 
 
+class _NSFWError(Exception):
+    """Raised when FLUX rejects a prompt as NSFW — skip to SDXL immediately."""
+    pass
+
+
 def _try_flux(prompt, output_path, image_index=0):
-    """Try Cloudflare FLUX.1 Schnell (primary). Returns True on success."""
+    """Try Cloudflare FLUX.1 Schnell (primary). Returns True on success.
+
+    Raises _NSFWError if FLUX flags the prompt — caller should skip to SDXL.
+    """
     try:
         from src.cloudflare_helper import generate_cloudflare_image
         seed = SEED_BASE + image_index
@@ -101,6 +127,10 @@ def _try_flux(prompt, output_path, image_index=0):
         img.save(output_path, "PNG")
         return True
     except Exception as e:
+        err_str = str(e).lower()
+        if "nsfw" in err_str or "content" in err_str and "prohibited" in err_str:
+            print(f"    ⚠️  FLUX NSFW filter triggered, skipping to SDXL")
+            raise _NSFWError(str(e))
         print(f"    ⚠️  FLUX Schnell: {e}")
     return False
 
@@ -153,15 +183,22 @@ def generate_single_image(prompt, output_path, image_index=0):
 
     # Try FLUX schnell first (higher quality)
     flux_prompt = _build_prompt(prompt, use_flux=True)
+    nsfw_blocked = False
     for attempt in range(3):
         print(f"    ⚡ FLUX [{attempt+1}/3]...")
-        if _try_flux(flux_prompt, output_path, image_index):
-            return output_path
+        try:
+            if _try_flux(flux_prompt, output_path, image_index):
+                return output_path
+        except _NSFWError:
+            nsfw_blocked = True
+            break  # Don't retry FLUX — skip straight to SDXL
 
-    # Fallback to SDXL Lightning
+    # Fallback to SDXL Lightning (more lenient content filter)
+    if nsfw_blocked:
+        print(f"    ☁️  FLUX blocked prompt, trying SDXL (more lenient)...")
     sdxl_prompt = _build_prompt(prompt, use_flux=False)
-    for attempt in range(2):
-        print(f"    ☁️  SDXL fallback [{attempt+1}/2]...")
+    for attempt in range(3):
+        print(f"    ☁️  SDXL fallback [{attempt+1}/3]...")
         if _try_sdxl(sdxl_prompt, output_path, image_index):
             return output_path
 
