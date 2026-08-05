@@ -58,15 +58,18 @@ GEMINI_TEXT_MODELS = [
 ]
 GEMINI_IMAGE_MODELS = [
     # All Gemini image models are paid — no free tier exists
-    # Cloudflare SDXL Lightning is the only free option
+    # Cloudflare FLUX Schnell is the primary free option
 ]
 # Primary (first in list) — used by default
 GEMINI_TEXT_MODEL = GEMINI_TEXT_MODELS[0]
-GEMINI_IMAGE_MODEL = GEMINI_IMAGE_MODELS[0]  # gemini-3.1-flash-lite-image
+GEMINI_IMAGE_MODEL = GEMINI_IMAGE_MODELS[0] if GEMINI_IMAGE_MODELS else None
 
 # ── Cloudflare Workers AI ──────────────────────────────────────────
 CLOUDFLARE_ACCOUNT_ID = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
 CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
+
+# ── Pollinations (backup, costs pollen) ───────────────────────────
+POLLINATIONS_API_KEY = os.environ.get("POLLINATIONS_API_KEY", "")
 
 # ── Google Cloud TTS ──────────────────────────────────────────────
 GOOGLE_TTS_API_KEY = os.environ.get("GEMINI_TTS_API_KEY", "")

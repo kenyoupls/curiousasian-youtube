@@ -1,7 +1,8 @@
-"""Image generation — Cloudflare SDXL Lightning (free, unlimited).
+"""Image generation — Cloudflare FLUX.1 Schnell (primary) + SDXL Lightning (fallback).
 
-No free Gemini/Google image API exists (all are paid-only).
-Cloudflare SDXL Lightning is the only free option with API access.
+Free tier: 10,000 neurons/day.
+FLUX Schnell: ~50 neurons/image → ~200 images/day (higher quality)
+SDXL Lightning: ~30 neurons/image → ~300 images/day (lower quality fallback)
 """
 
 import base64
@@ -14,17 +15,24 @@ class ImageGenerationFailed(Exception):
     pass
 
 
-# ── Prompt components (optimised for SDXL Lightning — keep SHORT) ─────
-# Lightning works best with <40 words, style-first, low detail
-CHARACTER_TAG = "simple stick figure with round head and dot eyes"
+# ── Prompt template (locked — matches successful flux_test4 framing) ──
+# FLUX schnell works best with natural language, no weight syntax
+FLUX_PROMPT_TEMPLATE = (
+    "cartoon character in center of white background, "
+    "character takes up 60 percent of frame height, "
+    "flat 2D cartoon boy with round eyes {scene}, "
+    "thick black outlines, solid flat colors, pure white background, "
+    "clean negative space around edges, simple minimalist composition"
+)
 
-STYLE_PREFIX = (
+# ── SDXL fallback prompt (weight syntax, style-first) ─────────────────
+SDXL_STYLE_PREFIX = (
     "(flat 2D cartoon, thick black outlines, solid colors, "
     "white background, wide landscape:1.2)"
 )
+SDXL_CHARACTER_TAG = "simple stick figure with round head and dot eyes"
 
-# Focused negative prompt — only the biggest failure modes
-NEGATIVE_PROMPT = (
+SDXL_NEGATIVE_PROMPT = (
     "(photorealistic, 3D render, anime, shading, gradients, "
     "blurry, watermark, text, close-up, portrait:1.4)"
 )
@@ -33,18 +41,19 @@ NEGATIVE_PROMPT = (
 SEED_BASE = 42
 
 
-def _build_prompt(scene, for_cloudflare=True):
-    """Build prompt optimised for SDXL Lightning.
+def _build_prompt(scene, use_flux=True):
+    """Build prompt for FLUX schnell (primary) or SDXL Lightning (fallback).
 
-    Key principles:
-    - Style FIRST, subject second (Lightning prioritises early tokens)
-    - Keep under 40 words total
-    - Use weight syntax (element:1.2) for emphasis
-    - Scene description trimmed to essentials
+    FLUX: Natural language, locked template for consistent framing.
+    SDXL: Weight syntax, style-first, under 40 words.
     """
-    # Strip scene to core action — remove any style words the LLM added
+    # Strip scene to core action — remove style words the LLM may have added
     scene = scene[:120].replace("stick figure character", "").strip(", ")
-    return f"{STYLE_PREFIX}, {CHARACTER_TAG} {scene}"
+
+    if use_flux:
+        return FLUX_PROMPT_TEMPLATE.format(scene=scene)
+    else:
+        return f"{SDXL_STYLE_PREFIX}, {SDXL_CHARACTER_TAG} {scene}"
 
 
 def _fit_to_hd(img: Image.Image) -> Image.Image:
@@ -74,19 +83,17 @@ def _fit_to_hd(img: Image.Image) -> Image.Image:
     return img
 
 
-def _try_cloudflare(prompt, output_path, image_index=0):
-    """Try Cloudflare SDXL Lightning. Returns True on success."""
+def _try_flux(prompt, output_path, image_index=0):
+    """Try Cloudflare FLUX.1 Schnell (primary). Returns True on success."""
     try:
         from src.cloudflare_helper import generate_cloudflare_image
         seed = SEED_BASE + image_index
-        # SDXL max is 1024x1024 natively; generate at max landscape ratio
-        # then upscale to 1920x1080
         generate_cloudflare_image(
             prompt, output_path,
-            width=1024, height=576,  # 16:9 ratio within SDXL limits
+            width=1024, height=576,  # 16:9 within FLUX limits
             seed=seed,
-            negative_prompt=NEGATIVE_PROMPT,
-            num_steps=8  # Lightning is distilled for 4-8 steps; 20 over-cooks
+            num_steps=4,  # FLUX schnell optimal at 4 steps
+            use_flux=True,
         )
         # Upscale to full HD
         img = Image.open(output_path).convert("RGB")
@@ -94,7 +101,29 @@ def _try_cloudflare(prompt, output_path, image_index=0):
         img.save(output_path, "PNG")
         return True
     except Exception as e:
-        print(f"    ⚠️  Cloudflare: {e}")
+        print(f"    ⚠️  FLUX Schnell: {e}")
+    return False
+
+
+def _try_sdxl(prompt, output_path, image_index=0):
+    """Try Cloudflare SDXL Lightning (fallback). Returns True on success."""
+    try:
+        from src.cloudflare_helper import generate_cloudflare_image
+        seed = SEED_BASE + image_index
+        generate_cloudflare_image(
+            prompt, output_path,
+            width=1024, height=576,
+            seed=seed,
+            negative_prompt=SDXL_NEGATIVE_PROMPT,
+            num_steps=8,
+            use_flux=False,
+        )
+        img = Image.open(output_path).convert("RGB")
+        img = _fit_to_hd(img)
+        img.save(output_path, "PNG")
+        return True
+    except Exception as e:
+        print(f"    ⚠️  SDXL Lightning: {e}")
     return False
 
 
@@ -120,13 +149,20 @@ def _try_gemini(prompt, output_path):
 
 
 def generate_single_image(prompt, output_path, image_index=0):
-    """Cloudflare SDXL Lightning (free). No free Gemini image API exists."""
+    """FLUX Schnell primary → SDXL Lightning fallback. Both free on Cloudflare."""
 
-    cf_prompt = _build_prompt(prompt, for_cloudflare=True)
-
+    # Try FLUX schnell first (higher quality)
+    flux_prompt = _build_prompt(prompt, use_flux=True)
     for attempt in range(3):
-        print(f"    ☁️  Cloudflare [{attempt+1}/3]...")
-        if _try_cloudflare(cf_prompt, output_path, image_index):
+        print(f"    ⚡ FLUX [{attempt+1}/3]...")
+        if _try_flux(flux_prompt, output_path, image_index):
+            return output_path
+
+    # Fallback to SDXL Lightning
+    sdxl_prompt = _build_prompt(prompt, use_flux=False)
+    for attempt in range(2):
+        print(f"    ☁️  SDXL fallback [{attempt+1}/2]...")
+        if _try_sdxl(sdxl_prompt, output_path, image_index):
             return output_path
 
     raise ImageGenerationFailed(f"All methods failed: {output_path.name}")
@@ -156,14 +192,22 @@ def generate_thumbnail(script):
     thumb = OUTPUT_DIR / "thumbnail.png"
     title = script["title"]
 
-    cf_prompt = _build_prompt(
+    flux_prompt = _build_prompt(
         f"YouTube thumbnail, vibrant colors, {title[:100]}, "
         f"surprised expression, bold composition",
-        for_cloudflare=True
+        use_flux=True
     )
 
-    # Cloudflare primary → gradient fallback
-    if not _try_cloudflare(cf_prompt, thumb, image_index=999):
+    # FLUX primary → SDXL → gradient fallback
+    generated = _try_flux(flux_prompt, thumb, image_index=999)
+    if not generated:
+        sdxl_prompt = _build_prompt(
+            f"YouTube thumbnail, vibrant colors, {title[:100]}, "
+            f"surprised expression, bold composition",
+            use_flux=False
+        )
+        generated = _try_sdxl(sdxl_prompt, thumb, image_index=999)
+    if not generated:
         img = Image.new("RGB", (1280, 720), (30, 20, 60))
         img.save(thumb, "PNG")
 

@@ -1,0 +1,29 @@
+{
+  "title": "Why Japanese People NEVER Tip",
+  "description": "You tip your waiter 20% and feel generous. In Japan? That same tip is an INSULT. Here's the wild reason why — and it'll make you question everything about tipping culture.",
+  "tags": ["japan", "tipping", "culture shock", "japanese culture", "etiquette", "CuriousAsian"],
+  "characters": [
+    {
+      "name": "Tourist",
+      "appearance": "Cartoon boy with round eyes, messy brown hair, stick body, wearing a t-shirt and backpack, confused expression. Flat 2D cartoon, thick black outlines, solid colors.",
+      "role": "Clueless but well-meaning tourist who accidentally offends everyone"
+    }
+  ],
+  "sections": [
+    {
+      "id": "hook",
+      "narration": "You just had the BEST meal of your life in Tokyo. The sushi was insane. So you leave a big fat tip on the table. And the waiter CHASES you down the street to give it back. Not because you overpaid. Because you just insulted him. In Japan, tipping isn't generous. It's OFFENSIVE. And the reason why? It's gonna flip everything you think about service.",
+      "visual_notes": "Scene 1: Tourist eating sushi, mind-blown face. Scene 2: Tourist leaving money on table, walking away proudly. Scene 3: Waiter sprinting after tourist, holding money out, looking upset."
+    },
+    {
+      "id": "origin",
+      "narration": "In Japanese culture, great service isn't a BONUS. It's the bare minimum. It's called omotenashi — total dedication to your craft. A waiter who serves you perfectly isn't doing extra. That's just... the job. Tipping says: I didn't expect you to be good at this. Here's a reward for surprising me. In Japan, that's like telling a surgeon — wow, you actually saved me! Here's five bucks.",
+      "visual_notes": "Scene 1: Waiter bowing perfectly, everything on tray balanced — word 'OMOTENASHI' glowing. Scene 2: Tourist handing money to surgeon — surgeon looking deeply offended."
+    },
+    {
+      "id": "twist",
+      "narration": "But here's the part that broke MY brain. Japanese workers don't earn less because there's no tipping. They earn a LIVING WAGE. The price you see on the menu already includes fair pay. Meanwhile in America, servers earn two dollars an hour and pray for tips. So which system is actually broken? Japan figured this out centuries ago. Your grandma's rules — finally explained.",
+      "visual_notes": "Scene 1: Split screen — Japan menu price = fair wage vs America menu price + tip + tax + guilt. Scene 2: Japanese waiter smiling confidently vs American waiter counting coins sadly. Scene 3: CuriousAsian logo — subscribe button."
+    }
+  ]
+}
