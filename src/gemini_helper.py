@@ -89,6 +89,75 @@ def generate_text(prompt):
     raise RuntimeError(f"All Gemini text models failed: {last_err[:200] if last_err else 'unknown'}")
 
 
+def generate_speech(text, voice_name="Kore", temperature=1.0):
+    """Generate speech audio via Gemini TTS (gemini-2.5-flash-preview-tts).
+
+    Returns raw PCM audio bytes (24kHz, mono, 16-bit little-endian).
+    Free tier: 3 RPM — use rate limiting externally.
+
+    Args:
+        text: Text to speak. Can include emotion cues like [excitedly], [whispers], etc.
+        voice_name: One of Gemini's 30 prebuilt voices (default: Kore — warm male).
+        temperature: Controls expressiveness (0.0-2.0, default 1.0).
+    """
+    _log_key_info()
+    last_err = None
+
+    tts_model = "gemini-2.5-flash-preview-tts"
+
+    for rnd in range(1, 5):  # 4 rounds with backoff
+        keys_tried = 0
+        while keys_tried < max(len(GEMINI_API_KEYS), 1):
+            client = _next_client()
+            keys_tried += 1
+            try:
+                resp = client.models.generate_content(
+                    model=tts_model,
+                    contents=text,
+                    config=types.GenerateContentConfig(
+                        response_modalities=["AUDIO"],
+                        speech_config=types.SpeechConfig(
+                            voice_config=types.VoiceConfig(
+                                prebuilt_voice_config=types.PrebuiltVoiceConfig(
+                                    voice_name=voice_name,
+                                )
+                            )
+                        ),
+                        temperature=temperature,
+                    )
+                )
+
+                # Extract audio data from response
+                if (resp.candidates and resp.candidates[0].content
+                        and resp.candidates[0].content.parts):
+                    part = resp.candidates[0].content.parts[0]
+                    if hasattr(part, 'inline_data') and part.inline_data:
+                        if rnd == 1:
+                            print(f"    ✅ TTS: {tts_model} (voice={voice_name})")
+                        return part.inline_data.data
+                raise RuntimeError("No audio data in TTS response")
+
+            except Exception as e:
+                err = str(e)
+                last_err = err
+                if _is_auth_error(err):
+                    key_prefix = GEMINI_API_KEYS[(_key_index - 1) % len(GEMINI_API_KEYS)][:8] if GEMINI_API_KEYS else "?"
+                    print(f"    ⚠️  Key {key_prefix}... auth failed on TTS, trying next...")
+                    continue
+                elif _is_overloaded(err):
+                    wait = 20 * rnd + random.uniform(0, 3)
+                    print(f"    ⚠️  TTS rate limited [{rnd}/4], waiting {wait:.0f}s...")
+                    time.sleep(wait)
+                    break
+                elif "404" in err:
+                    break
+                else:
+                    print(f"    ⚠️  TTS error: {err[:200]}")
+                    break
+
+    raise RuntimeError(f"Gemini TTS failed: {last_err[:200] if last_err else 'unknown'}")
+
+
 def generate_image(prompt):
     """Try image models with key rotation, 4 rounds with exponential backoff."""
     global _image_model, _last_image_request

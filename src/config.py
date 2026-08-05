@@ -68,8 +68,8 @@ GEMINI_IMAGE_MODEL = GEMINI_IMAGE_MODELS[0] if GEMINI_IMAGE_MODELS else None
 CLOUDFLARE_ACCOUNT_ID = os.environ.get("CLOUDFLARE_ACCOUNT_ID", "")
 CLOUDFLARE_API_TOKEN = os.environ.get("CLOUDFLARE_API_TOKEN", "")
 
-# ── Pollinations (backup, costs pollen) ───────────────────────────
-POLLINATIONS_API_KEY = os.environ.get("POLLINATIONS_API_KEY", "")
+# ── Pollinations (free, no API key needed) ───────────────────────
+# Using free endpoint: image.pollinations.ai/prompt/{prompt}
 
 # ── Google Cloud TTS ──────────────────────────────────────────────
 GOOGLE_TTS_API_KEY = os.environ.get("GEMINI_TTS_API_KEY", "")

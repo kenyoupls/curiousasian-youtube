@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""Main pipeline — orchestrates: script → audio → image prompts → images → video.
+"""Main pipeline — orchestrates: script → audio → image prompts → images → video → YouTube package.
 
 If image generation fails for a script, skips it and tries the next one.
+Sends full package to Telegram: video + thumbnail + YouTube description + hashtags + reel cuts.
 """
 
 import sys
@@ -21,9 +22,10 @@ from src.image_prompt_generator import generate_all_image_prompts
 from src.image_generator import generate_all_images, generate_thumbnail, ImageGenerationFailed
 from src.sfx_generator import generate_all_sfx, generate_background_music
 from src.video_builder import build_video
+from src.youtube_helper import generate_youtube_package
 from src.telegram_notifier import (
-    notify_scripts_low, notify_video_complete, notify_pipeline_failed,
-    notify_nsfw_warning
+    notify_pipeline_start, notify_scripts_low, notify_video_complete,
+    notify_pipeline_failed, notify_nsfw_warning
 )
 
 MAX_SCRIPT_RETRIES = 3  # Try up to 3 different scripts before giving up
@@ -46,7 +48,7 @@ def save_run_log(log: dict):
 
 
 def _build_video_from_script(script: dict, run_log: dict) -> dict:
-    """Run Steps 2-7 for a single script. Returns run_log on success.
+    """Run Steps 2-8 for a single script. Returns run_log on success.
 
     Raises ImageGenerationFailed if images can't be generated — caller
     should try the next script.
@@ -105,11 +107,26 @@ def _build_video_from_script(script: dict, run_log: dict) -> dict:
     )
     run_log["steps"]["video"] = str(video_path)
 
+    # ── Step 8: Generate YouTube package ───────────────────────
+    print("\n📋 STEP 8: Generating YouTube package...")
+    youtube_package = generate_youtube_package(script, audio_segments, total_duration)
+    run_log["steps"]["youtube_package"] = {
+        "hashtags": len(youtube_package.get("hashtags", [])),
+        "chapters": len(youtube_package.get("chapters", [])),
+        "reel_cuts": len(youtube_package.get("reel_cuts", [])),
+    }
+
+    # Save YouTube package
+    (OUTPUT_DIR / "youtube_package.json").write_text(
+        json.dumps(youtube_package, indent=2, default=str)
+    )
+
     return {
         "total_duration": total_duration,
         "image_count": len(image_paths),
         "video_path": video_path,
         "thumbnail_path": thumbnail_path,
+        "youtube_package": youtube_package,
     }
 
 
@@ -127,6 +144,9 @@ def run_pipeline():
         print("\n" + "=" * 60)
         print("🚀 CuriousAsian Pipeline — Starting")
         print("=" * 60)
+
+        # ── Startup ping to Telegram ───────────────────────────────
+        notify_pipeline_start()
 
         # ── Check script queue health ──────────────────────────────
         if is_queue_low():
@@ -185,7 +205,7 @@ def run_pipeline():
             print(f"   Skipped scripts: {len(run_log['skipped_scripts'])}")
         print("=" * 60)
 
-        # Notify via Telegram — send actual video + thumbnail
+        # Notify via Telegram — send full package
         remaining = get_queue_count()
         notify_video_complete(
             title=script["title"],
@@ -194,6 +214,7 @@ def run_pipeline():
             video_path=result.get("video_path"),
             thumbnail_path=result.get("thumbnail_path"),
             queue_remaining=remaining,
+            youtube_package=result.get("youtube_package"),
         )
 
     except Exception as e:

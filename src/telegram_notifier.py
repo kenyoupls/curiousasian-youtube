@@ -1,7 +1,7 @@
-"""Telegram bot — send videos, thumbnails, and alerts to @Curious_Asian_Bot.
+"""Telegram bot — send videos, thumbnails, YouTube package, and alerts to @Curious_Asian_Bot.
 
-Sends the actual video file + thumbnail + metadata directly to Telegram.
-No more downloading from GitHub — everything arrives in chat.
+Sends the actual video file + thumbnail + YouTube description + hashtags +
+reel cut timestamps + metadata directly to Telegram chat 834454829.
 """
 
 import requests
@@ -121,14 +121,20 @@ def send_video(video_path: Path, caption: str = "",
 
 # ── Pipeline notifications ───────────────────────────────────────────
 
+def notify_pipeline_start():
+    """Send a startup test ping when pipeline begins."""
+    send_message("🚀 *CuriousAsian Pipeline Starting*\n\nGenerating today's video...")
+
+
 def notify_video_complete(title: str, duration: float, source: str,
                           video_path: Path = None,
                           thumbnail_path: Path = None,
                           nsfw_blocks: int = 0,
-                          queue_remaining: int = None):
+                          queue_remaining: int = None,
+                          youtube_package: dict = None):
     """Full video delivery to Telegram.
 
-    Sends: thumbnail → video file → metadata summary.
+    Sends: thumbnail → video file → YouTube package → metadata.
     """
     source_label = "Claude" if source == "claude" else "Gemini (backup)"
 
@@ -140,7 +146,7 @@ def notify_video_complete(title: str, duration: float, source: str,
     if video_path and video_path.exists():
         video_caption = (
             f"📹 *{title}*\n"
-            f"⏱ {duration:.0f}s\n"
+            f"⏱ {duration:.0f}s ({duration/60:.1f} min)\n"
             f"✍️ {source_label}"
         )
         send_video(video_path, caption=video_caption, thumbnail_path=thumbnail_path)
@@ -153,7 +159,40 @@ def notify_video_complete(title: str, duration: float, source: str,
             f"⚠️ Video file not found for direct send."
         )
 
-    # 3. Send metadata + alerts
+    # 3. Send YouTube description (copy-paste ready)
+    if youtube_package:
+        desc = youtube_package.get("full_description", "")
+        if desc:
+            # Telegram has 4096 char limit per message
+            if len(desc) > 4000:
+                desc = desc[:4000] + "..."
+            send_message(
+                f"📋 *YouTube Description (copy-paste):*\n\n{desc}",
+                parse_mode="Markdown"
+            )
+
+        # 4. Send hashtags separately for easy copy
+        hashtags = youtube_package.get("hashtags", [])
+        if hashtags:
+            send_message(
+                f"#️⃣ *Hashtags:*\n\n{' '.join(hashtags)}",
+                parse_mode="Markdown"
+            )
+
+        # 5. Send reel cut timestamps
+        reel_cuts = youtube_package.get("reel_cuts", [])
+        if reel_cuts:
+            cuts_text = "\n".join(
+                f"  {i+1}. {r['start']} → {r['end']} ({', '.join(r['sections'][:3])})"
+                for i, r in enumerate(reel_cuts)
+            )
+            send_message(
+                f"🎬 *Reel Cut Timestamps:*\n\n{cuts_text}\n\n"
+                f"These are the best 60s segments for Shorts/Reels/TikTok.",
+                parse_mode="Markdown"
+            )
+
+    # 6. Send metadata + alerts
     alerts = []
     if nsfw_blocks > 0:
         alerts.append(f"⚠️ {nsfw_blocks} images hit NSFW filter (rewrites used)")
@@ -188,6 +227,6 @@ def notify_nsfw_warning(blocked_count: int, total_images: int):
     send_message(
         f"⚠️ *NSFW Filter Warning*\n\n"
         f"{blocked_count}/{total_images} images were blocked by "
-        f"Cloudflare's content filter.\n\n"
+        f"the content filter.\n\n"
         f"Prompt rewrites were used — check image quality."
     )
