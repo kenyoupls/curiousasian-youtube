@@ -77,70 +77,56 @@ def _generate_gemini_backup_script() -> dict:
 
     done_str = "\n".join(f"- {t}" for t in done_topics[-50:]) if done_topics else "None"
 
-    prompt = f"""You are a scriptwriter for "CuriousAsian", a YouTube channel that explains Asian cultural habits, traditions, and superstitions in a way that's entertaining, educational, and impossible to stop watching.
+    prompt = f"""You write scripts for "CuriousAsian" — a YouTube channel that explains Asian cultural habits in a fun, casual way. Like you're telling a friend over coffee.
 
-STYLE: Hybrid — Ink Explainer's immersive "you are there" storytelling hooks + MrBeast's fast-paced reveals.
+TONE: Talk like a real person. Casual. Conversational. Like explaining something cool to your friend who knows nothing about Asian culture. Use simple everyday words. NO fancy vocabulary. NO essay writing.
 
-GOLDEN RULE: The viewer must NEVER predict the next sentence. Every line must surprise, contradict, or shift the angle. If a viewer can finish your sentence — you've lost them.
+GOOD example: "So you know how in the West, you tip your waiter? In Japan, that's basically telling them they're poor."
+BAD example: "The cultural implications of gratuity in East Asian societies present a fascinating contradiction."
 
-HOOK TECHNIQUE (Ink Explainer style):
-- Open with an IMMERSIVE scene: "Imagine you're sitting in a Tokyo restaurant. You've just finished the best sushi of your life. You leave a tip on the table. And then... the waiter CHASES you down the street."
-- Put the viewer IN the moment — use "you" and present tense
-- Then SNAP to the consequence/contradiction — MrBeast pace kicks in
-
-ENERGY — MrBeast meets OverSimplified:
-- Every SINGLE SENTENCE must earn the next second. Zero filler. Zero predictability.
-- Use dramatic reveals: "But HERE'S what no one tells you..."
-- Short. Punchy. Sentences. Like. This.
-- Emotional rollercoaster: immersion → shock → curiosity → "no way" → mind blown → satisfying twist
-- Use original Asian terms (omotenashi, pantang, feng shui) but always explain them
+RULES:
+- Use "you", "we", "like", "basically", "so", "right?" — how people actually talk
+- Short sentences. One idea each. Easy to follow.
+- Explain everything like the viewer is 12 years old
+- Drop in the original Asian word (feng shui, pantang, etc.) but ALWAYS explain it right after
+- NO jargon, NO academic language, NO "cultural significance" type phrases
 - Keep language CLEAN — no words like "insult", "offensive", "angry" (image AI flags these)
-- TWIST every ~30 seconds. A 1-min video needs at least 2 "wait what" moments.
+- Include 2 "wait what?" moments — things that surprise the viewer
 
-AUDIENCE: Asian diaspora + culturally curious. They scroll fast. 1 second to hook them.
+AUDIENCE: People scrolling TikTok/YouTube who know nothing about Asian culture. Hook them in 2 seconds.
 
-FORMAT: 1-MINUTE VIDEO. ~150-170 words TOTAL. Every word must earn its place.
+FORMAT: 1-MINUTE VIDEO. ~150-170 words TOTAL.
 
-CRITICAL RULE — EACH SECTION = ONE SENTENCE (10-20 words max).
-EVERY section gets its OWN image. More sections = more visual cuts = more engaging.
-We want images changing every 2-3 seconds. So write 12-14 sections, each just ONE punchy sentence.
+EACH SECTION = ONE SENTENCE (10-20 words max). Write 12-14 sections.
 
 ALREADY COVERED (do NOT repeat):
 {done_str}
 
-Pick ONE topic: an everyday habit, superstition, or tradition with a WILD explanation.
+Pick ONE topic: an everyday Asian habit, superstition, or tradition that sounds crazy but has a real explanation.
 
-Structure: 12-14 sections. Each = ONE sentence + visual_notes for that moment.
-- hook_1 through hook_3: IMMERSIVE opening (Ink Explainer style). Put viewer IN the scene. Then SNAP to the shocking consequence. The viewer should think "wait WHAT?" within 3 seconds.
-- build_1 through build_3: Context that makes them care — but each fact more surprising than the last. Never explain the obvious.
-- twist_1 through twist_3: First "no way" moment at ~30 seconds. Flip everything they assumed.
-- payoff_1 through payoff_3: The REAL answer. Mind-blow. Make them want to share.
-- close_1 through close_2: Satisfying reframe + callback to the hook. LAST section MUST end with the tagline: "Your grandma's rules — finally explained."
-
-UNPREDICTABILITY RULES:
-- Never follow a question with its obvious answer
-- Never follow a negative with a positive (or vice versa) predictably
-- Each sentence should raise a NEW question the viewer didn't expect
-- Use contrasts: "Americans do X. Japanese do the OPPOSITE."
-- Use numbers for shock: specific stats, comparisons, amounts
+STRUCTURE (12-14 sections):
+- hook_1 to hook_3: Paint a scene. "Imagine you're at a restaurant in Tokyo..." Then hit them with the weird part. Make them go "wait what?"
+- build_1 to build_3: Give context. Each fact more surprising than the last. "And it gets weirder..."
+- twist_1 to twist_3: Flip what they assumed. "But here's the thing nobody tells you..."
+- payoff_1 to payoff_2: The real explanation. Make it satisfying. "So THAT'S why..."
+- close_1 to close_2: Tie it back to the opening. LAST section MUST end with: "Your grandma's rules — finally explained."
 
 VISUAL NOTES RULES:
-- The main character is ALWAYS a boy with round head, dot eyes, line mouth, messy brown hair, stick body
-- Describe ONE clear scene with MULTIPLE characters if relevant
-- Specific objects, specific background/setting, warm earth-toned colors
-- Keep subjects CENTERED in the frame (for vertical crop to Reels/TikTok)
-- CLEAN — no negative emotions, no conflict words. Describe poses and objects only.
-- Max 100 characters per visual_notes
+- Main character: boy with round head, dot eyes, line mouth, messy brown hair, stick body
+- ONE clear scene per section, specific objects and background
+- Warm earth-toned colors, subjects centered in frame
+- CLEAN — no negative emotions, no conflict words. Just poses and objects.
+- Max 100 characters
 
 Return ONLY valid JSON:
 {{
-  "title": "YouTube title (compelling, under 70 chars, use CAPS for one key word)",
+  "title": "YouTube title (casual, under 70 chars, use CAPS for one key word)",
   "description": "Short YouTube description + engagement question",
   "tags": ["tag1", "tag2", "CuriousAsian"],
   "sections": [
     {{
       "id": "hook_1",
-      "narration": "One punchy sentence — the SHOCKING thing, not the setup (10-20 words).",
+      "narration": "One casual sentence — how you'd say it to a friend (10-20 words).",
       "visual_notes": "Centered: boy in specific setting, specific objects, warm background"
     }}
   ]

@@ -1,11 +1,10 @@
-"""Voice generation — Gemini TTS primary, Google Cloud TTS fallback, gTTS last resort.
+"""Voice generation — Chirp 3 HD primary, Gemini TTS fallback, gTTS last resort.
 
-Dynamic delivery: emotion cues, pitch, rate, and emphasis vary by section type.
-Hook sections are excited + fast. Twists get dramatic whispers/pauses.
-Context sections are authoritative. Payoffs spike with excitement.
+Dynamic delivery: rate varies by section type.
+Hook sections are fast. Twists are slower/dramatic. Payoffs spike.
 
-Gemini TTS: gemini-2.5-flash-preview-tts with inline emotion tags.
-Google Cloud TTS: SSML with pauses and emphasis (fallback).
+Chirp 3 HD: Google's latest TTS with natural delivery + pace control.
+Gemini TTS: gemini-2.5-flash-preview-tts with inline emotion tags (fallback).
 gTTS: Free text-only fallback (last resort).
 """
 
@@ -24,8 +23,10 @@ from src.config import GOOGLE_TTS_API_KEY, OUTPUT_DIR
 
 # ── Google Cloud TTS config ──────────────────────────────────────────
 GOOGLE_TTS_URL = "https://texttospeech.googleapis.com/v1/text:synthesize"
-GOOGLE_TTS_VOICE = "en-US-Neural2-D"
 GOOGLE_TTS_LANGUAGE = "en-US"
+
+# ── Chirp 3 HD config (primary) ─────────────────────────────────────
+CHIRP3_VOICE = "en-US-Chirp3-HD-Kore"  # Same Kore voice as Gemini TTS
 
 # ── Gemini TTS config ────────────────────────────────────────────────
 GEMINI_TTS_VOICE = "Kore"  # Warm, engaging male voice
@@ -260,25 +261,22 @@ def _generate_gemini_tts(text: str, output_path: Path, section_id: str = ""):
     _pcm_to_mp3(pcm_data, output_path)
 
 
-def _generate_google_tts(text: str, output_path: Path, section_id: str = ""):
-    """Generate audio using Google Cloud TTS with SSML (fallback)."""
+def _generate_chirp3_tts(text: str, output_path: Path, section_id: str = ""):
+    """Generate audio using Chirp 3 HD (primary — best free quality)."""
     if not GOOGLE_TTS_API_KEY:
         raise RuntimeError("GOOGLE_TTS_API_KEY not set")
 
     profile = _get_voice_profile(section_id)
-    ssml = _build_ssml(text, section_id)
 
     payload = {
-        "input": {"ssml": ssml},
+        "input": {"text": text},
         "voice": {
             "languageCode": GOOGLE_TTS_LANGUAGE,
-            "name": GOOGLE_TTS_VOICE,
+            "name": CHIRP3_VOICE,
         },
         "audioConfig": {
             "audioEncoding": "MP3",
             "speakingRate": profile["rate"],
-            "pitch": profile["pitch"],
-            "effectsProfileId": ["large-home-entertainment-class-device"],
         },
     }
 
@@ -294,11 +292,11 @@ def _generate_google_tts(text: str, output_path: Path, section_id: str = ""):
             msg = err.get("error", {}).get("message", resp.text[:200])
         except Exception:
             msg = resp.text[:200]
-        raise RuntimeError(f"Google TTS {resp.status_code}: {msg}")
+        raise RuntimeError(f"Chirp 3 HD {resp.status_code}: {msg}")
 
     audio_content = resp.json().get("audioContent")
     if not audio_content:
-        raise RuntimeError("Google TTS returned no audio content")
+        raise RuntimeError("Chirp 3 HD returned no audio content")
 
     output_path.write_bytes(base64.b64decode(audio_content))
 
@@ -312,25 +310,26 @@ def _generate_gtts(text: str, output_path: Path):
 
 def generate_section_audio(text: str, output_path: Path,
                            section_id: str = "") -> Path:
-    """Generate audio: Gemini TTS → Google Cloud TTS → gTTS.
+    """Generate audio: Chirp 3 HD → Gemini TTS → gTTS.
 
-    section_id determines emotion cues (Gemini) or voice profile (Google TTS).
+    section_id determines voice profile (Chirp 3) or emotion cues (Gemini).
     """
-    # Primary: Gemini TTS (with emotion cues per section)
+    # Primary: Chirp 3 HD (best free quality, reliable, pace control)
+    try:
+        _generate_chirp3_tts(text, output_path, section_id)
+        if output_path.exists() and output_path.stat().st_size > 1000:
+            print(f"    ✅ Chirp 3 HD: {section_id}")
+            return output_path
+    except Exception as e:
+        print(f"    ⚠️  Chirp 3 HD failed, trying Gemini TTS: {e}")
+
+    # Fallback: Gemini TTS (with emotion cues per section)
     try:
         _generate_gemini_tts(text, output_path, section_id)
         if output_path.exists() and output_path.stat().st_size > 1000:
             return output_path
     except Exception as e:
-        print(f"    ⚠️  Gemini TTS failed, trying Google TTS: {e}")
-
-    # Fallback: Google Cloud TTS (with SSML pauses/emphasis)
-    try:
-        _generate_google_tts(text, output_path, section_id)
-        if output_path.exists() and output_path.stat().st_size > 1000:
-            return output_path
-    except Exception as e:
-        print(f"    ⚠️  Google TTS failed, falling back to gTTS: {e}")
+        print(f"    ⚠️  Gemini TTS failed, falling back to gTTS: {e}")
 
     # Last resort: gTTS (no emotion, but still works)
     try:
