@@ -1,0 +1,34 @@
+{
+  "started_at": "2026-08-07T05:54:21.719404",
+  "steps": {
+    "script": {
+      "title": "Why Asians KEEP the plastic on new couches",
+      "source": "gemini_backup",
+      "sections": 13
+    },
+    "audio": {
+      "segments": 13,
+      "total_seconds": 53.3
+    },
+    "image_prompts": 21,
+    "images": 21,
+    "audio_production": {
+      "sfx": [
+        "whoosh",
+        "dramatic_hit",
+        "ding"
+      ],
+      "music_duration": 63.3
+    },
+    "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4",
+    "youtube_package": {
+      "hashtags": 13,
+      "chapters": 5,
+      "reel_cuts": 0
+    }
+  },
+  "status": "success",
+  "skipped_scripts": [],
+  "completed_at": "2026-08-07T05:56:23.105691",
+  "total_duration_seconds": 53.3
+}
