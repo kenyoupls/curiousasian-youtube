@@ -1,14 +1,14 @@
 {
-  "started_at": "2026-08-08T04:15:23.773417",
+  "started_at": "2026-08-08T04:43:53.255478",
   "steps": {
     "script": {
-      "title": "Why You NEVER Stick Chopsticks Upright in Rice",
+      "title": "Why Asians ALWAYS Take Off Shoes Before Going Inside",
       "source": "claude",
       "sections": 12
     },
     "audio": {
       "segments": 12,
-      "total_seconds": 56.6
+      "total_seconds": 57.3
     },
     "image_prompts": 22,
     "images": 22,
@@ -18,7 +18,7 @@
         "dramatic_hit",
         "ding"
       ],
-      "music_duration": 66.6
+      "music_duration": 67.3
     },
     "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4",
     "youtube_package": {
@@ -28,7 +28,18 @@
     }
   },
   "status": "success",
-  "skipped_scripts": [],
-  "completed_at": "2026-08-08T04:18:06.552338",
-  "total_duration_seconds": 56.6
+  "skipped_scripts": [
+    {
+      "title": "Why Asians ALWAYS Take Off Shoes Before Going Inside",
+      "reason": "All image engines failed: Cloudflare FLUX 400: AiError: AiError: Input prompt contains NSFW content. (5dac78d3-03fb-484e-90ae-82dae188d340)",
+      "attempt": 1
+    },
+    {
+      "title": "Why Asians ALWAYS Take Off Shoes Before Going Inside",
+      "reason": "All image engines failed: Cloudflare FLUX 400: AiError: AiError: Input prompt contains NSFW content. (450b82ac-dbfc-4c3b-960e-25b8e3de94d7)",
+      "attempt": 2
+    }
+  ],
+  "completed_at": "2026-08-08T04:47:17.598995",
+  "total_duration_seconds": 57.3
 }
