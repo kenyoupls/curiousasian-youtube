@@ -1,0 +1,34 @@
+{
+  "started_at": "2026-08-08T04:15:23.773417",
+  "steps": {
+    "script": {
+      "title": "Why You NEVER Stick Chopsticks Upright in Rice",
+      "source": "claude",
+      "sections": 12
+    },
+    "audio": {
+      "segments": 12,
+      "total_seconds": 56.6
+    },
+    "image_prompts": 22,
+    "images": 22,
+    "audio_production": {
+      "sfx": [
+        "whoosh",
+        "dramatic_hit",
+        "ding"
+      ],
+      "music_duration": 66.6
+    },
+    "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4",
+    "youtube_package": {
+      "hashtags": 15,
+      "chapters": 5,
+      "reel_cuts": 0
+    }
+  },
+  "status": "success",
+  "skipped_scripts": [],
+  "completed_at": "2026-08-08T04:18:06.552338",
+  "total_duration_seconds": 56.6
+}
