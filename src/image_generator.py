@@ -16,22 +16,28 @@ class ImageGenerationFailed(Exception):
 
 
 # ── Locked character description ────────────────────────────────────
+# Meme-face style: white circle head, big expressive eyes, like internet comics.
 # Same character in EVERY frame for channel-wide consistency.
 LOCKED_CHARACTER = (
-    "a boy with round head, two dot eyes, straight line mouth, "
-    "messy brown hair, simple stick body with basic clothing"
+    "a character with perfectly round white circle head, "
+    "big round black dot eyes, simple small line mouth, "
+    "short messy brown hair on top of head, "
+    "wearing dark hoodie and simple pants"
 )
 
 # ── Locked style template ────────────────────────────────────────────
-# Consistent cartoon style across the ENTIRE channel.
+# Internet meme-face comic style across the ENTIRE channel.
 # {scene} is the ONLY variable — everything else is fixed.
 FLUX_STYLE_TEMPLATE = (
-    "flat 2D cartoon illustration, thick black outlines, solid flat colors, "
-    "simple minimalist style like OverSimplified YouTube channel, "
-    "warm earth-toned background with soft muted colors, "
+    "internet meme comic style illustration, "
+    "characters have perfectly round white circle heads with big expressive meme-face eyes, "
+    "thick black outlines on characters, detailed colorful background, "
+    "manga-inspired emotion effects like action speed lines and exclamation marks, "
     "{scene}, "
-    "all important subjects centered in middle of frame, "
-    "clean composition, no gradients, no shading, no photorealism"
+    "dynamic composition with visible emotions, "
+    "floating reaction symbols like sweat drops and question marks, "
+    "NO realistic faces, NO blush marks, NO nose detail, "
+    "NO children's book style, NO soft shading on faces, NO cute anime"
 )
 
 # ── Seed base for consistency ─────────────────────────────────────────
@@ -99,7 +105,8 @@ def _build_prompt(scene):
     scene = scene[:200]
     for remove in ["stick figure", "flat 2D", "thick outlines", "cartoon style",
                     "white background", "solid colors", "minimalist",
-                    "earth-toned", "warm background"]:
+                    "earth-toned", "warm background", "meme face", "circle head",
+                    "meme-face", "internet comic"]:
         scene = scene.replace(remove, "").replace(remove.title(), "")
     scene = re.sub(r'\s+', ' ', scene).strip(", ")
 

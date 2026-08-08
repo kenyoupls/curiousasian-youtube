@@ -64,7 +64,8 @@ def _generate_gemini_backup_script() -> dict:
     """Generate a script using Gemini when queue is empty.
 
     Script has granular sections (1-2 sentences each) for tight
-    image-to-narration sync. One stick figure character throughout.
+    image-to-narration sync. Meme-face character with emotions throughout.
+    Includes pattern interrupts, tangent questions, curiosity hooks.
     """
     # Load done scripts to avoid repeats
     done_topics = []
@@ -79,7 +80,7 @@ def _generate_gemini_backup_script() -> dict:
 
     prompt = f"""You write scripts for "CuriousAsian" — a YouTube channel that explains Asian cultural habits in a fun, casual way. Like you're telling a friend over coffee.
 
-TONE: Talk like a real person. Casual. Conversational. Like explaining something cool to your friend who knows nothing about Asian culture. Use simple everyday words. NO fancy vocabulary. NO essay writing.
+TONE: Talk like a real person. Casual. Conversational. Use simple everyday words. NO fancy vocabulary. NO essay writing.
 
 GOOD example: "So you know how in the West, you tip your waiter? In Japan, that's basically telling them they're poor."
 BAD example: "The cultural implications of gratuity in East Asian societies present a fascinating contradiction."
@@ -91,7 +92,12 @@ RULES:
 - Drop in the original Asian word (feng shui, pantang, etc.) but ALWAYS explain it right after
 - NO jargon, NO academic language, NO "cultural significance" type phrases
 - Keep language CLEAN — no words like "insult", "offensive", "angry" (image AI flags these)
-- Include 2 "wait what?" moments — things that surprise the viewer
+
+ENGAGEMENT RULES (critical):
+- CURIOSITY HOOK: First 2 seconds must open a loop the viewer HAS to close. Make them think "wait, why?"
+- PATTERN INTERRUPTS: Every ~20 seconds (~4 sections), break the expected flow. Ask a weird tangent question, drop a shocking fact, flip an assumption. The viewer's brain should go "wait what?" and re-engage.
+- "WHAT ABOUT X?" TANGENT: Include at least ONE unexpected lateral question the viewer never considered. Example: talking about not cutting nails at night → "but wait, what about cutting HAIR at night?" This makes them feel like they're discovering something nobody talks about.
+- SATISFYING ENDING: Close every loop you opened. The viewer should feel smarter than when they started. Tie the ending back to the opening hook.
 
 AUDIENCE: People scrolling TikTok/YouTube who know nothing about Asian culture. Hook them in 2 seconds.
 
@@ -105,17 +111,18 @@ ALREADY COVERED (do NOT repeat):
 Pick ONE topic: an everyday Asian habit, superstition, or tradition that sounds crazy but has a real explanation.
 
 STRUCTURE (12-14 sections):
-- hook_1 to hook_3: Paint a scene. "Imagine you're at a restaurant in Tokyo..." Then hit them with the weird part. Make them go "wait what?"
-- build_1 to build_3: Give context. Each fact more surprising than the last. "And it gets weirder..."
-- twist_1 to twist_3: Flip what they assumed. "But here's the thing nobody tells you..."
-- payoff_1 to payoff_2: The real explanation. Make it satisfying. "So THAT'S why..."
-- close_1 to close_2: Tie it back to the opening. LAST section MUST end with: "Your grandma's rules — finally explained."
+- hook_1 to hook_3: Open a curiosity loop. Paint a scene, then hit them with something unexpected. "Imagine you're at a dinner in China and someone hands you a clock..." Make them go "why is that weird?"
+- build_1 to build_3: Give context. Each fact more surprising than the last. Around build_3, drop a PATTERN INTERRUPT — a weird tangent or "what about X?" question they never considered.
+- twist_1 to twist_3: Flip what they assumed. "But here's the thing nobody tells you..." Around twist_2, another pattern interrupt — a surprising connection to something completely different.
+- payoff_1 to payoff_2: The real explanation. Make it SO satisfying they want to tell someone. "So THAT'S why..."
+- close_1 to close_2: Tie it back to the opening loop. Close it perfectly. LAST section MUST end with: "Your grandma's rules — finally explained."
 
 VISUAL NOTES RULES:
-- Main character: boy with round head, dot eyes, line mouth, messy brown hair, stick body
-- ONE clear scene per section, specific objects and background
-- Warm earth-toned colors, subjects centered in frame
-- CLEAN — no negative emotions, no conflict words. Just poses and objects.
+- Main character: white circle head, big round dot eyes, small line mouth, messy brown hair, dark hoodie
+- Show EMOTIONS on the character: wide shocked eyes, dropped jaw, sweat drops, floating question marks, exclamation marks, thought bubbles with short text
+- Show SCENE REACTIONS: action speed lines behind character, shaking effect lines, floating symbols
+- ONE clear scene per section, specific objects and detailed colorful background
+- CLEAN — no negative emotions, no conflict words. Just expressive poses, reactions, and objects.
 - Max 100 characters
 
 Return ONLY valid JSON:
@@ -127,7 +134,7 @@ Return ONLY valid JSON:
     {{
       "id": "hook_1",
       "narration": "One casual sentence — how you'd say it to a friend (10-20 words).",
-      "visual_notes": "Centered: boy in specific setting, specific objects, warm background"
+      "visual_notes": "Character with shocked wide eyes at dinner table, chopsticks in rice bowl, speed lines"
     }}
   ]
 }}

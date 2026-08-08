@@ -145,7 +145,7 @@ SECTION_END_PAUSE_MS = 200
 
 
 def _build_ssml(text: str, section_id: str = "") -> str:
-    """Build SSML with dynamic pauses and tiered emphasis (Google TTS fallback)."""
+    """Build SSML with dynamic pauses and tiered emphasis for Chirp 3 HD."""
     ssml = text
 
     for pattern in BIG_REVEAL_PAUSE_BEFORE:
@@ -262,21 +262,41 @@ def _generate_gemini_tts(text: str, output_path: Path, section_id: str = ""):
 
 
 def _generate_chirp3_tts(text: str, output_path: Path, section_id: str = ""):
-    """Generate audio using Chirp 3 HD (primary — best free quality)."""
+    """Generate audio using Chirp 3 HD with SSML emotions.
+
+    Uses pauses, emphasis, and prosody tags for dynamic delivery:
+    - Hook: fast rate, higher pitch — excitement
+    - Twist: dramatic pauses before reveals, slower
+    - Payoff: pitch spike, energetic
+    - Build: steady, authoritative
+    - Close: warm, slightly slower
+    """
     if not GOOGLE_TTS_API_KEY:
         raise RuntimeError("GOOGLE_TTS_API_KEY not set")
 
     profile = _get_voice_profile(section_id)
 
+    # Build SSML with pauses + emphasis, then wrap in prosody for pitch/rate
+    ssml = _build_ssml(text, section_id)
+    pitch_st = profile.get("pitch", 0)
+    rate = profile.get("rate", 1.2)
+    ssml_body = ssml.replace("<speak>", "").replace("</speak>", "")
+    ssml_final = (
+        f'<speak>'
+        f'<prosody rate="{rate}" pitch="{pitch_st:+.1f}st">'
+        f'{ssml_body}'
+        f'</prosody>'
+        f'</speak>'
+    )
+
     payload = {
-        "input": {"text": text},
+        "input": {"ssml": ssml_final},
         "voice": {
             "languageCode": GOOGLE_TTS_LANGUAGE,
             "name": CHIRP3_VOICE,
         },
         "audioConfig": {
             "audioEncoding": "MP3",
-            "speakingRate": profile["rate"],
         },
     }
 
