@@ -28,7 +28,7 @@ GEMINI_API_KEY = _single_key or (_all_keys[0] if _all_keys else "")
 
 # ── Channel ────────────────────────────────────────────────────────
 CHANNEL_NAME = "CuriousAsian"
-CHANNEL_TAGLINE = "Your grandma's rules, finally explained."
+CHANNEL_TAGLINE = ""  # Rotating CTA used instead — see script_manager.py
 
 # ── Voice ──────────────────────────────────────────────────────────
 # Google Cloud TTS is now primary, gTTS is fallback
@@ -43,13 +43,13 @@ IMAGE_DURATION = 2.5  # seconds per image — fast cuts for engagement
 
 # ── Image style ────────────────────────────────────────────────────
 IMAGE_STYLE = (
-    "STYLE: MackExplains7 2D vector stickman animation style. "
-    "Clean thick black line-art, solid cell-shading, plain white skin on ALL characters. "
-    'Main character: oversized round white head, dot eyes, dark hoodie with "Curious Kid", '
-    "olive cargo pants, brown boots, white gloves. "
-    "Flat graphic colors, bright exposure, dynamic lighting. "
-    "ALL characters MUST have plain white skin and oversized round white heads. "
-    "NO photorealism, NO anime, NO realistic humans, NO skin color, NO 3D."
+    "STYLE: 90s vintage anime cel-shaded illustration. "
+    "Retro anime art style like 1990s Japanese animation. "
+    "Main character: cute boy with round face, big sparkling eyes, "
+    "messy brown hair, dark gray hoodie, olive cargo pants, brown boots. "
+    "Warm nostalgic color palette, soft cel-shading, visible outlines, "
+    "detailed colorful backgrounds, hand-drawn look. "
+    "NO photorealism, NO 3D, NO stickman, NO modern digital art."
 )
 
 # ── Gemini models (fallback order — tries each until one works) ────

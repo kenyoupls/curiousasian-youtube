@@ -103,28 +103,35 @@ def _generate_gemini_backup_script() -> dict:
     done_str = "\n".join(f"- {t}" for t in done_topics[-50:]) if done_topics else "None"
     cta = _pick_cta()
 
-    prompt = f"""You write scripts for "CuriousAsian" — a YouTube channel that explains Asian cultural habits in a fun, casual way. Like you're telling a friend over coffee.
+    prompt = f"""You write scripts for "CuriousAsian" — a YouTube Shorts channel about Asian cultural habits.
 
-TONE: Talk like a real person. Casual. Conversational. Use simple everyday words. NO fancy vocabulary. NO essay writing.
+TONE: You're a funny storyteller with sarcasm. Like you're narrating something ridiculous that actually happened. React to the facts. Make jokes. Be dramatic on purpose.
 
-GOOD example: "So you know how in the West, you tip your waiter? In Japan, that's basically telling them they're poor."
-BAD example: "The cultural implications of gratuity in East Asian societies present a fascinating contradiction."
+GOOD examples:
+- "Picture this. You're chilling at home, trimming your nails. Your Asian grandma walks in and... absolute chaos. Apparently you just invited death into the house. Cool. Thanks grandma."
+- "So in Korea, if someone gives you a fan for your birthday, that's basically a death threat. No I'm not joking. They literally think the fan will steal your soul while you sleep."
+- "Bro. In Japan, tipping your waiter is like telling them they're poor. You're trying to be nice and they're standing there like... did you just disrespect me?"
+
+BAD examples (too documentary):
+- "The cultural implications of gratuity in East Asian societies present a fascinating contradiction."
+- "Let me explain the historical significance of this ancient tradition."
 
 RULES:
-- Use "you", "we", "like", "basically", "so", "right?" — how people actually talk
-- Short sentences. One idea each. Easy to follow.
-- Explain everything like the viewer is 12 years old
-- Drop in the original Asian word (feng shui, pantang, etc.) but ALWAYS explain it right after
-- NO jargon, NO academic language, NO "cultural significance" type phrases
+- Write like you're REACTING to the facts, not lecturing about them
+- Use sarcasm, dramatic pauses, and punchlines
+- Short punchy sentences. One idea each.
+- React to your own facts: "Wait, it gets worse." / "Yeah. That's a thing." / "Cool. Thanks grandma."
+- Drop the original Asian word (feng shui, pantang, etc.) but ALWAYS explain it right after
+- NO jargon, NO academic language, NO documentary narrator voice
 - Keep language CLEAN — no words like "insult", "offensive", "angry" (image AI flags these)
 
 ENGAGEMENT RULES (critical):
-- CURIOSITY HOOK: First 2 seconds must open a loop the viewer HAS to close. Make them think "wait, why?"
-- PATTERN INTERRUPTS: Every ~20 seconds (~4 sections), break the expected flow. Ask a weird tangent question, drop a shocking fact, flip an assumption. The viewer's brain should go "wait what?" and re-engage.
-- "WHAT ABOUT X?" TANGENT: Include at least ONE unexpected lateral question the viewer never considered. Example: talking about not cutting nails at night → "but wait, what about cutting HAIR at night?" This makes them feel like they're discovering something nobody talks about.
-- SATISFYING ENDING: Close every loop you opened. The viewer should feel smarter than when they started. Tie the ending back to the opening hook.
+- CURIOSITY HOOK: First 2 seconds must open a loop. Paint a scene, then hit them with something absurd.
+- PATTERN INTERRUPTS: Every ~20 seconds (~4 sections), break the flow. Ask a weird tangent, drop a shocking fact, flip an assumption. "Wait what?" moment.
+- "WHAT ABOUT X?" TANGENT: At least ONE unexpected lateral question. Example: talking about not cutting nails at night → "but wait, what about cutting HAIR at night?" Makes them feel like they're discovering something nobody talks about.
+- SATISFYING ENDING: Close every loop. Tie back to the opening hook. Viewer should feel smarter.
 
-AUDIENCE: People scrolling TikTok/YouTube who know nothing about Asian culture. Hook them in 2 seconds.
+AUDIENCE: People scrolling TikTok/Shorts who know nothing about Asian culture. Hook them in 2 seconds.
 
 FORMAT: 1-MINUTE VIDEO. ~150-170 words TOTAL.
 
@@ -136,21 +143,19 @@ ALREADY COVERED (do NOT repeat):
 Pick ONE topic: an everyday Asian habit, superstition, or tradition that sounds crazy but has a real explanation.
 
 STRUCTURE (12-14 sections):
-- hook_1 to hook_3: Open a curiosity loop. Paint a scene, then hit them with something unexpected. "Imagine you're at a dinner in China and someone hands you a clock..." Make them go "why is that weird?"
-- build_1 to build_3: Give context. Each fact more surprising than the last. Around build_3, drop a PATTERN INTERRUPT — a weird tangent or "what about X?" question they never considered.
-- twist_1 to twist_3: Flip what they assumed. "But here's the thing nobody tells you..." Around twist_2, another pattern interrupt — a surprising connection to something completely different.
-- payoff_1 to payoff_2: The real explanation. Make it SO satisfying they want to tell someone. "So THAT'S why..."
-- close_1 to close_2: Tie it back to the opening loop. Close it perfectly. LAST section MUST end with this exact CTA: "{cta}"
+- hook_1 to hook_3: Paint a scene, then drop something absurd. Make them go "wait, why?" React to it yourself.
+- build_1 to build_3: Give context with escalating surprises. Around build_3, drop a PATTERN INTERRUPT — weird tangent or "what about X?" question.
+- twist_1 to twist_3: Flip what they assumed. "But here's the thing nobody tells you..." Around twist_2, another pattern interrupt.
+- payoff_1 to payoff_2: The real explanation. Make it SO satisfying. "So THAT'S why..."
+- close_1 to close_2: Tie back to the opening. Close it perfectly. LAST section MUST end with this exact CTA: "{cta}"
 
 VISUAL NOTES RULES:
-- ART STYLE: MackExplains7 2D vector stickman with thick black line-art, solid cell-shading, plain white skin
-- MAIN CHARACTER (always present): oversized round white head, dot eyes, dark charcoal hoodie with "Curious Kid" text, olive cargo pants, brown boots, white gloves
-- SECONDARY CHARACTER (when needed): MackExplains7 style stickman matching the topic's expert (e.g., "stickman grandma with white hair and apron" or "stickman chef with white toque hat"). ALL characters MUST have plain white skin and oversized round white heads.
-- Show EMOTIONS: wide shocked eyes, dropped jaw, sweat drops, floating question marks, exclamation marks
-- Show SCENE REACTIONS: action speed lines, shaking effect lines, floating symbols
-- ONE clear scene per section, specific objects, bright colorful background
-- CLEAN — no negative emotions, no conflict words. Just expressive poses and objects.
-- ALL characters MUST be stickman style. NEVER describe realistic or anime characters.
+- ART STYLE: 90s vintage anime, cute retro anime cel-shaded illustration
+- MAIN CHARACTER (always present): cute boy with round face, big sparkling eyes, messy brown hair, dark gray hoodie, olive cargo pants, brown boots
+- SECONDARY CHARACTER (when needed): vintage anime style character matching the topic (e.g., "anime grandma with white hair scolding" or "anime chef looking shocked"). Keep them in the same retro anime style.
+- Show EMOTIONS: sparkling eyes, sweat drops, floating question marks, exclamation marks, thought bubbles
+- ONE clear scene per section, specific objects, warm colorful background
+- CLEAN — no negative emotions, no conflict words. Just expressive reactions and objects.
 - Max 100 characters
 
 Return ONLY valid JSON:

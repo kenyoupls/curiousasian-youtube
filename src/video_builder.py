@@ -15,8 +15,9 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 from src.config import (
     VIDEO_WIDTH, VIDEO_HEIGHT, VIDEO_FPS,
-    OUTPUT_DIR, CHANNEL_NAME, CHANNEL_TAGLINE, ASSETS_DIR
+    OUTPUT_DIR, CHANNEL_NAME, ASSETS_DIR
 )
+from src.script_manager import _pick_cta
 
 
 # ── Music settings ────────────────────────────────────────────────────
@@ -26,52 +27,52 @@ MUSIC_FADE_OUT = 3.0
 
 
 # ── Section-specific visual effects ──────────────────────────────────
-# Each section type gets different zoom/shake/flash to keep energy high.
-# hook = grab attention, twist = dramatic reveal, payoff = mind-blown.
+# Each section type gets different effects. All static (no zoom/Ken Burns).
+# Shake + flash ONLY on twist + payoff for dramatic moments.
 SECTION_EFFECTS = {
-    # Hook: fast zoom pop + shake — grab attention immediately
+    # Hook: static with flash — grab attention with white flash only
     "hook": {
-        "zoom_start": 1.0, "zoom_end": 1.12, "zoom_speed_s": 0.25,
-        "shake_x": 4, "shake_y": 3, "shake_freq": 0.7,
+        "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
+        "shake_x": 0, "shake_y": 0, "shake_freq": 0,
         "flash_in": True,
         "sub_color": "yellow", "sub_size": 52, "sub_fade": 0.15,
     },
-    # Build: static — explanatory, calm energy (NO Ken Burns)
+    # Build: fully static — explanatory, calm energy
     "build": {
         "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
         "shake_x": 0, "shake_y": 0, "shake_freq": 0,
         "flash_in": False,
         "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
     },
-    # Origin: static like build (NO Ken Burns)
+    # Origin: fully static
     "origin": {
         "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
         "shake_x": 0, "shake_y": 0, "shake_freq": 0,
         "flash_in": False,
         "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
     },
-    # Twist: zoom pop + strong shake — dramatic reveal
+    # Twist: shake + flash — dramatic reveal moment
     "twist": {
-        "zoom_start": 1.0, "zoom_end": 1.10, "zoom_speed_s": 0.3,
+        "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
         "shake_x": 6, "shake_y": 4, "shake_freq": 0.8,
         "flash_in": True,
         "sub_color": "yellow", "sub_size": 52, "sub_fade": 0.15,
     },
-    # Payoff: biggest zoom pop — the satisfying answer
+    # Payoff: shake + flash — the mind-blown moment
     "payoff": {
-        "zoom_start": 1.0, "zoom_end": 1.15, "zoom_speed_s": 0.2,
+        "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
         "shake_x": 3, "shake_y": 2, "shake_freq": 0.5,
         "flash_in": True,
         "sub_color": "yellow", "sub_size": 56, "sub_fade": 0.12,
     },
-    # Close: static — winding down (NO Ken Burns)
+    # Close: fully static — winding down
     "close": {
         "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
         "shake_x": 0, "shake_y": 0, "shake_freq": 0,
         "flash_in": False,
         "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
     },
-    # Default fallback — static (NO Ken Burns)
+    # Default fallback — fully static
     "default": {
         "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
         "shake_x": 0, "shake_y": 0, "shake_freq": 0,
@@ -276,13 +277,8 @@ def _generate_intro_bumper(output_path: Path, duration: float = 1.5) -> Path:
     # Channel name (gold, vertically centered for 9:16)
     bb = draw.textbbox((0, 0), CHANNEL_NAME, font=font_lg)
     x = (VIDEO_WIDTH - (bb[2] - bb[0])) // 2
-    y = VIDEO_HEIGHT // 2 - 50
+    y = VIDEO_HEIGHT // 2 - 30
     draw.text((x, y), CHANNEL_NAME, fill=(255, 215, 0), font=font_lg)
-
-    # Tagline
-    bb2 = draw.textbbox((0, 0), CHANNEL_TAGLINE, font=font_sm)
-    x2 = (VIDEO_WIDTH - (bb2[2] - bb2[0])) // 2
-    draw.text((x2, y + 80), CHANNEL_TAGLINE, fill=(200, 200, 200), font=font_sm)
 
     img.save(intro_img, "PNG")
 
@@ -336,14 +332,28 @@ def _generate_end_screen(output_path: Path, duration: float = 3.0) -> Path:
     bb2 = draw.textbbox((0, 0), CHANNEL_NAME, font=font_md)
     draw.text(((VIDEO_WIDTH - (bb2[2] - bb2[0])) // 2, btn_y + btn_h + 50), CHANNEL_NAME, fill=(255, 215, 0), font=font_md)
 
-    # Tagline
-    bb3 = draw.textbbox((0, 0), CHANNEL_TAGLINE, font=font_sm)
-    draw.text(((VIDEO_WIDTH - (bb3[2] - bb3[0])) // 2, btn_y + btn_h + 110), CHANNEL_TAGLINE, fill=(180, 180, 180), font=font_sm)
+    # Rotating CTA (word-wrapped for vertical)
+    cta_text = _pick_cta()
+    cta_lines, cur = [], ""
+    for word in cta_text.split():
+        test = f"{cur} {word}".strip()
+        if draw.textbbox((0, 0), test, font=font_sm)[2] > VIDEO_WIDTH - 80 and cur:
+            cta_lines.append(cur)
+            cur = word
+        else:
+            cur = test
+    if cur:
+        cta_lines.append(cur)
+    for i, line in enumerate(cta_lines):
+        bb3 = draw.textbbox((0, 0), line, font=font_sm)
+        draw.text(((VIDEO_WIDTH - (bb3[2] - bb3[0])) // 2, btn_y + btn_h + 110 + i * 35),
+                  line, fill=(180, 180, 180), font=font_sm)
 
     # Daily text
+    daily_y = btn_y + btn_h + 110 + len(cta_lines) * 35 + 20
     daily = "New video every day"
     bb4 = draw.textbbox((0, 0), daily, font=font_sm)
-    draw.text(((VIDEO_WIDTH - (bb4[2] - bb4[0])) // 2, btn_y + btn_h + 160), daily, fill=(140, 140, 140), font=font_sm)
+    draw.text(((VIDEO_WIDTH - (bb4[2] - bb4[0])) // 2, daily_y), daily, fill=(140, 140, 140), font=font_sm)
 
     img.save(end_img, "PNG")
 

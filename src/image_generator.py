@@ -16,39 +16,27 @@ class ImageGenerationFailed(Exception):
 
 
 # ── Locked character description ────────────────────────────────────
-# MackExplains7 style: 2D vector stickman, oversized round white head,
-# thick black line-art, "Curious Kid" hoodie. Same character EVERY frame.
+# Cute vintage anime boy — consistent description for every frame.
 LOCKED_CHARACTER = (
-    "MackExplains7 style black line-art stick figure with smooth plain white skin, "
-    "an oversized round plain white head, big expressive dot eyes, "
-    "wearing white cartoon gloves, a dark charcoal pullover hoodie "
-    'with "Curious Kid" printed on the chest, '
-    "rolled-up olive cargo pants, and brown boots"
-)
-
-# ── Secondary character template ─────────────────────────────────────
-# Mentor/expert figures vary by topic but ALWAYS match MackExplains7 style.
-# {role_desc} is filled per-scene by the script's visual_notes.
-SECONDARY_CHARACTER = (
-    "a MackExplains7 style black line-art stick figure with smooth plain white skin "
-    "and an oversized round plain white head, {role_desc}"
+    "a cute young boy with round face, big expressive sparkling eyes, "
+    "short messy brown hair, wearing a dark gray hoodie and olive cargo pants, "
+    "brown boots, cheerful and expressive"
 )
 
 # ── Locked style template ────────────────────────────────────────────
-# MackExplains7 2D vector stickman style across the ENTIRE channel.
+# 90s vintage anime aesthetic across the ENTIRE channel.
 # {scene} is the ONLY variable — everything else is fixed.
 FLUX_STYLE_TEMPLATE = (
-    "MackExplains7 2D vector stickman animation style, "
-    "clean thick black line-art, solid cell-shading, "
-    "smooth plain white skin on ALL characters, flat graphic colors, "
-    "dynamic studio lighting, bright exposure, "
-    "9:16 vertical full-body portrait composition, "
+    "90s vintage anime cel-shaded illustration, "
+    "retro anime art style like 1990s Japanese animation, "
+    "warm nostalgic color palette, soft cel-shading with visible outlines, "
+    "expressive cute anime characters with big sparkling eyes, "
     "{scene}, "
-    "ALL characters MUST have plain white skin and oversized round white heads, "
-    "NO realistic humans, NO anime characters, NO detailed faces, "
-    "NO skin color, NO blush marks, NO nose detail, NO 3D rendering, "
-    "NO children's book style, NO cute anime, NO photorealism, "
-    "NEVER generate any character as a detailed human or anime character"
+    "detailed colorful background, warm golden lighting, "
+    "hand-drawn look with slight film grain, "
+    "vertical 9:16 composition, "
+    "NO photorealism, NO 3D rendering, NO modern digital art, "
+    "NO stickman, NO vector art, NO chibi, NO watercolor"
 )
 
 # ── Seed base for consistency ─────────────────────────────────────────
@@ -119,7 +107,8 @@ def _build_prompt(scene):
                     "earth-toned", "warm background", "meme face", "circle head",
                     "meme-face", "internet comic", "MackExplains7", "2D vector",
                     "line-art", "cell-shading", "stickman", "anime style",
-                    "realistic", "detailed human"]:
+                    "realistic", "detailed human", "vintage anime", "retro anime",
+                    "cel-shaded", "90s anime"]:
         scene = scene.replace(remove, "").replace(remove.title(), "")
     scene = re.sub(r'\s+', ' ', scene).strip(", ")
 
