@@ -43,13 +43,13 @@ IMAGE_DURATION = 2.5  # seconds per image — fast cuts for engagement
 
 # ── Image style ────────────────────────────────────────────────────
 IMAGE_STYLE = (
-    "STYLE: Simple stick-figure cartoon like OverSimplified YouTube channel. "
-    "One recurring character: round white head, two dot eyes, straight line mouth, "
-    "messy brown hair, stick body with simple clothing. "
-    "Thick black outlines, flat solid colors, NO gradients, NO shading. "
-    "White or simple solid-color background. Objects around the character are "
-    "simple but recognizable (icons, props, animals). "
-    "NO photorealism, NO 3D, NO text, NO watermarks."
+    "STYLE: MackExplains7 2D vector stickman animation style. "
+    "Clean thick black line-art, solid cell-shading, plain white skin on ALL characters. "
+    'Main character: oversized round white head, dot eyes, dark hoodie with "Curious Kid", '
+    "olive cargo pants, brown boots, white gloves. "
+    "Flat graphic colors, bright exposure, dynamic lighting. "
+    "ALL characters MUST have plain white skin and oversized round white heads. "
+    "NO photorealism, NO anime, NO realistic humans, NO skin color, NO 3D."
 )
 
 # ── Gemini models (fallback order — tries each until one works) ────

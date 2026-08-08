@@ -143,11 +143,14 @@ STRUCTURE (12-14 sections):
 - close_1 to close_2: Tie it back to the opening loop. Close it perfectly. LAST section MUST end with this exact CTA: "{cta}"
 
 VISUAL NOTES RULES:
-- Main character: white circle head, big round dot eyes, small line mouth, messy brown hair, dark hoodie
-- Show EMOTIONS on the character: wide shocked eyes, dropped jaw, sweat drops, floating question marks, exclamation marks, thought bubbles with short text
-- Show SCENE REACTIONS: action speed lines behind character, shaking effect lines, floating symbols
-- ONE clear scene per section, specific objects and detailed colorful background
-- CLEAN — no negative emotions, no conflict words. Just expressive poses, reactions, and objects.
+- ART STYLE: MackExplains7 2D vector stickman with thick black line-art, solid cell-shading, plain white skin
+- MAIN CHARACTER (always present): oversized round white head, dot eyes, dark charcoal hoodie with "Curious Kid" text, olive cargo pants, brown boots, white gloves
+- SECONDARY CHARACTER (when needed): MackExplains7 style stickman matching the topic's expert (e.g., "stickman grandma with white hair and apron" or "stickman chef with white toque hat"). ALL characters MUST have plain white skin and oversized round white heads.
+- Show EMOTIONS: wide shocked eyes, dropped jaw, sweat drops, floating question marks, exclamation marks
+- Show SCENE REACTIONS: action speed lines, shaking effect lines, floating symbols
+- ONE clear scene per section, specific objects, bright colorful background
+- CLEAN — no negative emotions, no conflict words. Just expressive poses and objects.
+- ALL characters MUST be stickman style. NEVER describe realistic or anime characters.
 - Max 100 characters
 
 Return ONLY valid JSON:

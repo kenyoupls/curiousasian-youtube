@@ -16,28 +16,39 @@ class ImageGenerationFailed(Exception):
 
 
 # ── Locked character description ────────────────────────────────────
-# Meme-face style: white circle head, big expressive eyes, like internet comics.
-# Same character in EVERY frame for channel-wide consistency.
+# MackExplains7 style: 2D vector stickman, oversized round white head,
+# thick black line-art, "Curious Kid" hoodie. Same character EVERY frame.
 LOCKED_CHARACTER = (
-    "a character with perfectly round white circle head, "
-    "big round black dot eyes, simple small line mouth, "
-    "short messy brown hair on top of head, "
-    "wearing dark hoodie and simple pants"
+    "MackExplains7 style black line-art stick figure with smooth plain white skin, "
+    "an oversized round plain white head, big expressive dot eyes, "
+    "wearing white cartoon gloves, a dark charcoal pullover hoodie "
+    'with "Curious Kid" printed on the chest, '
+    "rolled-up olive cargo pants, and brown boots"
+)
+
+# ── Secondary character template ─────────────────────────────────────
+# Mentor/expert figures vary by topic but ALWAYS match MackExplains7 style.
+# {role_desc} is filled per-scene by the script's visual_notes.
+SECONDARY_CHARACTER = (
+    "a MackExplains7 style black line-art stick figure with smooth plain white skin "
+    "and an oversized round plain white head, {role_desc}"
 )
 
 # ── Locked style template ────────────────────────────────────────────
-# Internet meme-face comic style across the ENTIRE channel.
+# MackExplains7 2D vector stickman style across the ENTIRE channel.
 # {scene} is the ONLY variable — everything else is fixed.
 FLUX_STYLE_TEMPLATE = (
-    "internet meme comic style illustration, "
-    "characters have perfectly round white circle heads with big expressive meme-face eyes, "
-    "thick black outlines on characters, detailed colorful background, "
-    "manga-inspired emotion effects like action speed lines and exclamation marks, "
+    "MackExplains7 2D vector stickman animation style, "
+    "clean thick black line-art, solid cell-shading, "
+    "smooth plain white skin on ALL characters, flat graphic colors, "
+    "dynamic studio lighting, bright exposure, "
+    "9:16 vertical full-body portrait composition, "
     "{scene}, "
-    "dynamic composition with visible emotions, "
-    "floating reaction symbols like sweat drops and question marks, "
-    "NO realistic faces, NO blush marks, NO nose detail, "
-    "NO children's book style, NO soft shading on faces, NO cute anime"
+    "ALL characters MUST have plain white skin and oversized round white heads, "
+    "NO realistic humans, NO anime characters, NO detailed faces, "
+    "NO skin color, NO blush marks, NO nose detail, NO 3D rendering, "
+    "NO children's book style, NO cute anime, NO photorealism, "
+    "NEVER generate any character as a detailed human or anime character"
 )
 
 # ── Seed base for consistency ─────────────────────────────────────────
@@ -106,7 +117,9 @@ def _build_prompt(scene):
     for remove in ["stick figure", "flat 2D", "thick outlines", "cartoon style",
                     "white background", "solid colors", "minimalist",
                     "earth-toned", "warm background", "meme face", "circle head",
-                    "meme-face", "internet comic"]:
+                    "meme-face", "internet comic", "MackExplains7", "2D vector",
+                    "line-art", "cell-shading", "stickman", "anime style",
+                    "realistic", "detailed human"]:
         scene = scene.replace(remove, "").replace(remove.title(), "")
     scene = re.sub(r'\s+', ' ', scene).strip(", ")
 
