@@ -35,8 +35,9 @@ CHANNEL_TAGLINE = "Your grandma's rules, finally explained."
 # Old edge-tts config kept for reference only
 
 # ── Video ──────────────────────────────────────────────────────────
-VIDEO_WIDTH = 1920
-VIDEO_HEIGHT = 1080
+# 9:16 vertical format for YouTube Shorts / TikTok / Reels
+VIDEO_WIDTH = 1080
+VIDEO_HEIGHT = 1920
 VIDEO_FPS = 30
 IMAGE_DURATION = 2.5  # seconds per image — fast cuts for engagement
 

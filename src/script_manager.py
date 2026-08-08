@@ -10,6 +10,30 @@ from src.config import (
 from src.gemini_helper import generate_text
 
 
+# ── Rotating CTA endings ─────────────────────────────────────────────
+# Mixed each video. The close section picks one based on done-script count.
+ROTATING_CTAS = [
+    # Engagement question — makes them comment
+    "Drop a comment — what rule did YOUR grandma have that you never understood?",
+    "What's the weirdest rule you grew up with? Tell me in the comments.",
+    "Comment below — which of these did YOU grow up hearing?",
+    # Follow hook — makes them subscribe
+    "Follow for more — tomorrow's one is even crazier.",
+    "Subscribe if you want your mind blown again tomorrow.",
+    "Hit follow — I explain one weird rule every single day.",
+    # Teaser — makes them watch next
+    "Next one: why you should NEVER whistle at night. Trust me.",
+    "Wait till you hear what happens when you point at the moon.",
+    "Tomorrow I'll explain why you never stick chopsticks straight up. Stay tuned.",
+]
+
+
+def _pick_cta() -> str:
+    """Pick a CTA based on how many scripts have been done (rotates through list)."""
+    done_count = len(list(SCRIPTS_DONE_DIR.glob("*.json")))
+    return ROTATING_CTAS[done_count % len(ROTATING_CTAS)]
+
+
 def _clean_json(text: str) -> str:
     """Fix common Gemini JSON issues."""
     text = re.sub(r',\s*([}\]])', r'\1', text)
@@ -77,6 +101,7 @@ def _generate_gemini_backup_script() -> dict:
             pass
 
     done_str = "\n".join(f"- {t}" for t in done_topics[-50:]) if done_topics else "None"
+    cta = _pick_cta()
 
     prompt = f"""You write scripts for "CuriousAsian" — a YouTube channel that explains Asian cultural habits in a fun, casual way. Like you're telling a friend over coffee.
 
@@ -115,7 +140,7 @@ STRUCTURE (12-14 sections):
 - build_1 to build_3: Give context. Each fact more surprising than the last. Around build_3, drop a PATTERN INTERRUPT — a weird tangent or "what about X?" question they never considered.
 - twist_1 to twist_3: Flip what they assumed. "But here's the thing nobody tells you..." Around twist_2, another pattern interrupt — a surprising connection to something completely different.
 - payoff_1 to payoff_2: The real explanation. Make it SO satisfying they want to tell someone. "So THAT'S why..."
-- close_1 to close_2: Tie it back to the opening loop. Close it perfectly. LAST section MUST end with: "Your grandma's rules — finally explained."
+- close_1 to close_2: Tie it back to the opening loop. Close it perfectly. LAST section MUST end with this exact CTA: "{cta}"
 
 VISUAL NOTES RULES:
 - Main character: white circle head, big round dot eyes, small line mouth, messy brown hair, dark hoodie

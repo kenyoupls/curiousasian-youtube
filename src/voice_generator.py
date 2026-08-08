@@ -138,10 +138,10 @@ EMPHASIS_MODERATE = [
     r"superior", r"inferior",
 ]
 
-BIG_REVEAL_PAUSE_MS = 550
-MEDIUM_PAUSE_MS = 300
-MICRO_PAUSE_MS = 150
-SECTION_END_PAUSE_MS = 200
+BIG_REVEAL_PAUSE_MS = 280
+MEDIUM_PAUSE_MS = 150
+MICRO_PAUSE_MS = 80
+SECTION_END_PAUSE_MS = 100
 
 
 def _build_ssml(text: str, section_id: str = "") -> str:

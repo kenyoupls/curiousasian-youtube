@@ -181,7 +181,7 @@ def _generate_cloudflare(prompt, output_path, image_index=0):
     seed = SEED_BASE + image_index
     generate_cloudflare_image(
         prompt, output_path,
-        width=1024, height=576,
+        width=576, height=1024,
         seed=seed,
         num_steps=4,
         use_flux=True,

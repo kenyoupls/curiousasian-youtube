@@ -36,16 +36,16 @@ SECTION_EFFECTS = {
         "flash_in": True,
         "sub_color": "yellow", "sub_size": 52, "sub_fade": 0.15,
     },
-    # Build: gentle slow zoom — explanatory, calm energy
+    # Build: static — explanatory, calm energy (NO Ken Burns)
     "build": {
-        "zoom_start": 1.0, "zoom_end": 1.05, "zoom_speed_s": 0,
+        "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
         "shake_x": 0, "shake_y": 0, "shake_freq": 0,
         "flash_in": False,
         "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
     },
-    # Origin: same as build
+    # Origin: static like build (NO Ken Burns)
     "origin": {
-        "zoom_start": 1.0, "zoom_end": 1.05, "zoom_speed_s": 0,
+        "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
         "shake_x": 0, "shake_y": 0, "shake_freq": 0,
         "flash_in": False,
         "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
@@ -64,16 +64,16 @@ SECTION_EFFECTS = {
         "flash_in": True,
         "sub_color": "yellow", "sub_size": 56, "sub_fade": 0.12,
     },
-    # Close: gentle zoom out — winding down
+    # Close: static — winding down (NO Ken Burns)
     "close": {
-        "zoom_start": 1.05, "zoom_end": 1.0, "zoom_speed_s": 0,
+        "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
         "shake_x": 0, "shake_y": 0, "shake_freq": 0,
         "flash_in": False,
         "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
     },
-    # Default fallback
+    # Default fallback — static (NO Ken Burns)
     "default": {
-        "zoom_start": 1.0, "zoom_end": 1.06, "zoom_speed_s": 0,
+        "zoom_start": 1.0, "zoom_end": 1.0, "zoom_speed_s": 0,
         "shake_x": 0, "shake_y": 0, "shake_freq": 0,
         "flash_in": False,
         "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
@@ -168,7 +168,7 @@ def _make_image_clip(image_path: Path, duration: float, key_phrase: str,
             f":fontsize={sub_size}:fontcolor={sub_color}"
             f":borderw=4:bordercolor=black@0.9"
             f":box=1:boxcolor=black@0.4:boxborderw=12"
-            f":x=(w-tw)/2:y=h-120"
+            f":x=(w-tw)/2:y=h-280"
             f":alpha='{alpha_expr}'"
         )
 
@@ -209,7 +209,7 @@ def _make_static_clip(image_path: Path, duration: float, key_phrase: str,
             f":fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
             f":fontsize=44:fontcolor=white"
             f":borderw=3:bordercolor=black@0.8"
-            f":x=(w-tw)/2:y=h-100"
+            f":x=(w-tw)/2:y=h-280"
         )
     cmd = [
         "ffmpeg", "-y",
@@ -267,22 +267,22 @@ def _generate_intro_bumper(output_path: Path, duration: float = 1.5) -> Path:
     draw = ImageDraw.Draw(img)
 
     try:
-        font_lg = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 72)
-        font_sm = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 32)
+        font_lg = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 64)
+        font_sm = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 28)
     except (OSError, IOError):
         font_lg = ImageFont.load_default()
         font_sm = font_lg
 
-    # Channel name (gold, centered)
+    # Channel name (gold, vertically centered for 9:16)
     bb = draw.textbbox((0, 0), CHANNEL_NAME, font=font_lg)
     x = (VIDEO_WIDTH - (bb[2] - bb[0])) // 2
-    y = VIDEO_HEIGHT // 2 - 60
+    y = VIDEO_HEIGHT // 2 - 50
     draw.text((x, y), CHANNEL_NAME, fill=(255, 215, 0), font=font_lg)
 
     # Tagline
     bb2 = draw.textbbox((0, 0), CHANNEL_TAGLINE, font=font_sm)
     x2 = (VIDEO_WIDTH - (bb2[2] - bb2[0])) // 2
-    draw.text((x2, y + 90), CHANNEL_TAGLINE, fill=(200, 200, 200), font=font_sm)
+    draw.text((x2, y + 80), CHANNEL_TAGLINE, fill=(200, 200, 200), font=font_sm)
 
     img.save(intro_img, "PNG")
 
@@ -314,15 +314,15 @@ def _generate_end_screen(output_path: Path, duration: float = 3.0) -> Path:
     draw = ImageDraw.Draw(img)
 
     try:
-        font_lg = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 64)
-        font_md = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 40)
-        font_sm = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 28)
+        font_lg = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 56)
+        font_md = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 36)
+        font_sm = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 26)
     except (OSError, IOError):
         font_lg = ImageFont.load_default()
         font_md = font_lg
         font_sm = font_lg
 
-    # Red subscribe button
+    # Red subscribe button (centered vertically for 9:16)
     cta = "SUBSCRIBE"
     bb = draw.textbbox((0, 0), cta, font=font_lg)
     cta_w, cta_h = bb[2] - bb[0], bb[3] - bb[1]
@@ -334,16 +334,16 @@ def _generate_end_screen(output_path: Path, duration: float = 3.0) -> Path:
 
     # Channel name
     bb2 = draw.textbbox((0, 0), CHANNEL_NAME, font=font_md)
-    draw.text(((VIDEO_WIDTH - (bb2[2] - bb2[0])) // 2, btn_y + btn_h + 40), CHANNEL_NAME, fill=(255, 215, 0), font=font_md)
+    draw.text(((VIDEO_WIDTH - (bb2[2] - bb2[0])) // 2, btn_y + btn_h + 50), CHANNEL_NAME, fill=(255, 215, 0), font=font_md)
 
     # Tagline
     bb3 = draw.textbbox((0, 0), CHANNEL_TAGLINE, font=font_sm)
-    draw.text(((VIDEO_WIDTH - (bb3[2] - bb3[0])) // 2, btn_y + btn_h + 100), CHANNEL_TAGLINE, fill=(180, 180, 180), font=font_sm)
+    draw.text(((VIDEO_WIDTH - (bb3[2] - bb3[0])) // 2, btn_y + btn_h + 110), CHANNEL_TAGLINE, fill=(180, 180, 180), font=font_sm)
 
     # Daily text
     daily = "New video every day"
     bb4 = draw.textbbox((0, 0), daily, font=font_sm)
-    draw.text(((VIDEO_WIDTH - (bb4[2] - bb4[0])) // 2, btn_y + btn_h + 150), daily, fill=(140, 140, 140), font=font_sm)
+    draw.text(((VIDEO_WIDTH - (bb4[2] - bb4[0])) // 2, btn_y + btn_h + 160), daily, fill=(140, 140, 140), font=font_sm)
 
     img.save(end_img, "PNG")
 
@@ -398,9 +398,15 @@ def _mix_audio_layers(voiceover_path: Path, music_path: Path,
             parts.append(f"[{idx}:a]volume=0.4,adelay={delay}|{delay},apad=whole_dur={total_duration}[{lbl}]")
             labels.append(f"[{lbl}]")
         n = 2 + sfx_count
-        parts.append(f"[0:a][music]{''.join(labels)}amix=inputs={n}:duration=first:dropout_transition=2,volume=1.5[aout]")
+        parts.append(
+            f"[0:a][music]{''.join(labels)}amix=inputs={n}:duration=first:dropout_transition=2,volume=1.5,"
+            f"loudnorm=I=-14:TP=-1:LRA=11[aout]"
+        )
     else:
-        parts.append("[0:a][music]amix=inputs=2:duration=first:dropout_transition=2,volume=1.8[aout]")
+        parts.append(
+            "[0:a][music]amix=inputs=2:duration=first:dropout_transition=2,volume=1.8,"
+            "loudnorm=I=-14:TP=-1:LRA=11[aout]"
+        )
 
     cmd = ["ffmpeg", "-y"] + inputs + ["-filter_complex", ";".join(parts), "-map", "[aout]", "-c:a", "aac", "-b:a", "192k", str(output_path)]
 
@@ -565,7 +571,22 @@ def build_video(script: dict, image_paths: list[Path],
         mixed.unlink(missing_ok=True)
         video_no_music.unlink(missing_ok=True)
     else:
-        video_no_music.rename(final_path)
+        # No BGM — still boost voiceover volume with loudnorm
+        print("  🔊 Normalizing audio volume...")
+        cmd = [
+            "ffmpeg", "-y", "-i", str(video_no_music),
+            "-c:v", "copy",
+            "-af", "loudnorm=I=-14:TP=-1:LRA=11",
+            "-c:a", "aac", "-b:a", "192k",
+            "-movflags", "+faststart",
+            str(final_path)
+        ]
+        result = subprocess.run(cmd, capture_output=True, text=True, timeout=300)
+        if result.returncode != 0:
+            print("  ⚠️  Loudnorm failed, using original volume")
+            video_no_music.rename(final_path)
+        else:
+            video_no_music.unlink(missing_ok=True)
 
     # Stats
     probe = subprocess.run(["ffprobe", "-v", "quiet", "-show_entries", "format=duration", "-of", "json", str(final_path)],
