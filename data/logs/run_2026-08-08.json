@@ -1,24 +1,24 @@
 {
-  "started_at": "2026-08-08T04:43:53.255478",
+  "started_at": "2026-08-08T08:44:54.229914",
   "steps": {
     "script": {
-      "title": "Why Asians ALWAYS Take Off Shoes Before Going Inside",
+      "title": "Why You Should NEVER Give a Clock as a Gift in China",
       "source": "claude",
       "sections": 12
     },
     "audio": {
       "segments": 12,
-      "total_seconds": 57.3
+      "total_seconds": 53.5
     },
-    "image_prompts": 22,
-    "images": 22,
+    "image_prompts": 21,
+    "images": 21,
     "audio_production": {
       "sfx": [
         "whoosh",
         "dramatic_hit",
         "ding"
       ],
-      "music_duration": 67.3
+      "music_duration": 63.5
     },
     "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4",
     "youtube_package": {
@@ -30,16 +30,16 @@
   "status": "success",
   "skipped_scripts": [
     {
-      "title": "Why Asians ALWAYS Take Off Shoes Before Going Inside",
-      "reason": "All image engines failed: Cloudflare FLUX 400: AiError: AiError: Input prompt contains NSFW content. (5dac78d3-03fb-484e-90ae-82dae188d340)",
+      "title": "Why You Should NEVER Give a Clock as a Gift in China",
+      "reason": "All image engines failed: Cloudflare FLUX 400: AiError: AiError: Input prompt contains NSFW content. (4051c45e-2674-4c3c-b623-0714e4539c7e)",
       "attempt": 1
     },
     {
-      "title": "Why Asians ALWAYS Take Off Shoes Before Going Inside",
-      "reason": "All image engines failed: Cloudflare FLUX 400: AiError: AiError: Input prompt contains NSFW content. (450b82ac-dbfc-4c3b-960e-25b8e3de94d7)",
+      "title": "Why You Should NEVER Give a Clock as a Gift in China",
+      "reason": "All image engines failed: Cloudflare FLUX 400: AiError: AiError: Input prompt contains NSFW content. (7f6a06e5-c107-4004-bd57-6a8ec4de20ee)",
       "attempt": 2
     }
   ],
-  "completed_at": "2026-08-08T04:47:17.598995",
-  "total_duration_seconds": 57.3
+  "completed_at": "2026-08-08T08:47:57.746401",
+  "total_duration_seconds": 53.5
 }
