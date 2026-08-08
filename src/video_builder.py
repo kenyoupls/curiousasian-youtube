@@ -1,8 +1,9 @@
 """Video assembly using FFmpeg.
 
 Features:
-- Static images with hard cuts (OverSimplified style)
-- Key phrase text overlays
+- Punchy zoom pops, shake, and flash effects per section type
+- Animated subtitle overlays with keyword highlights
+- Hard cuts between sections (fast, not Ken Burns)
 - Background music with auto-ducking under voiceover
 - Sound effects at section transitions
 - Intro bumper + end screen CTA
@@ -24,15 +25,177 @@ MUSIC_FADE_IN = 2.0
 MUSIC_FADE_OUT = 3.0
 
 
-def _make_image_clip(image_path: Path, duration: float, key_phrase: str,
-                     clip_path: Path, **kwargs) -> Path:
-    """Create a static image clip with optional text overlay. No zoom, no pan."""
+# ── Section-specific visual effects ──────────────────────────────────
+# Each section type gets different zoom/shake/flash to keep energy high.
+# hook = grab attention, twist = dramatic reveal, payoff = mind-blown.
+SECTION_EFFECTS = {
+    # Hook: fast zoom pop + shake — grab attention immediately
+    "hook": {
+        "zoom_start": 1.0, "zoom_end": 1.12, "zoom_speed_s": 0.25,
+        "shake_x": 4, "shake_y": 3, "shake_freq": 0.7,
+        "flash_in": True,
+        "sub_color": "yellow", "sub_size": 52, "sub_fade": 0.15,
+    },
+    # Build: gentle slow zoom — explanatory, calm energy
+    "build": {
+        "zoom_start": 1.0, "zoom_end": 1.05, "zoom_speed_s": 0,
+        "shake_x": 0, "shake_y": 0, "shake_freq": 0,
+        "flash_in": False,
+        "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
+    },
+    # Origin: same as build
+    "origin": {
+        "zoom_start": 1.0, "zoom_end": 1.05, "zoom_speed_s": 0,
+        "shake_x": 0, "shake_y": 0, "shake_freq": 0,
+        "flash_in": False,
+        "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
+    },
+    # Twist: zoom pop + strong shake — dramatic reveal
+    "twist": {
+        "zoom_start": 1.0, "zoom_end": 1.10, "zoom_speed_s": 0.3,
+        "shake_x": 6, "shake_y": 4, "shake_freq": 0.8,
+        "flash_in": True,
+        "sub_color": "yellow", "sub_size": 52, "sub_fade": 0.15,
+    },
+    # Payoff: biggest zoom pop — the satisfying answer
+    "payoff": {
+        "zoom_start": 1.0, "zoom_end": 1.15, "zoom_speed_s": 0.2,
+        "shake_x": 3, "shake_y": 2, "shake_freq": 0.5,
+        "flash_in": True,
+        "sub_color": "yellow", "sub_size": 56, "sub_fade": 0.12,
+    },
+    # Close: gentle zoom out — winding down
+    "close": {
+        "zoom_start": 1.05, "zoom_end": 1.0, "zoom_speed_s": 0,
+        "shake_x": 0, "shake_y": 0, "shake_freq": 0,
+        "flash_in": False,
+        "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
+    },
+    # Default fallback
+    "default": {
+        "zoom_start": 1.0, "zoom_end": 1.06, "zoom_speed_s": 0,
+        "shake_x": 0, "shake_y": 0, "shake_freq": 0,
+        "flash_in": False,
+        "sub_color": "white", "sub_size": 44, "sub_fade": 0.3,
+    },
+}
 
+
+def _get_section_effect(section_id: str) -> dict:
+    """Get visual effect profile for a section based on its ID prefix."""
+    for prefix, effect in SECTION_EFFECTS.items():
+        if section_id.startswith(prefix):
+            return effect
+    return SECTION_EFFECTS["default"]
+
+
+def _make_image_clip(image_path: Path, duration: float, key_phrase: str,
+                     clip_path: Path, section_id: str = "", **kwargs) -> Path:
+    """Create an image clip with punchy effects based on section type.
+
+    Effects:
+    - Fast zoom pop on hook/twist/payoff (NOT slow Ken Burns)
+    - Shake/wobble on high-energy sections
+    - White flash at start of dramatic sections
+    - Animated subtitle with fade-in and color per section
+    """
+    effect = _get_section_effect(section_id)
+    total_frames = max(int(duration * VIDEO_FPS), 1)
+
+    # ── Build zoom expression ────────────────────────────────────
+    zs = effect["zoom_start"]
+    ze = effect["zoom_end"]
+    zoom_speed = effect.get("zoom_speed_s", 0)
+    delta = ze - zs
+
+    if zoom_speed > 0 and delta != 0:
+        # Fast zoom pop: reach target in zoom_speed seconds, then hold
+        zoom_frames = max(int(zoom_speed * VIDEO_FPS), 1)
+        # Use min() for increasing zoom, max() for decreasing
+        if delta > 0:
+            z_expr = f"min({ze}\\,{zs}+{delta:.4f}*on/{zoom_frames})"
+        else:
+            z_expr = f"max({ze}\\,{zs}+{delta:.4f}*on/{zoom_frames})"
+    else:
+        # Slow zoom over full duration (gentle)
+        if total_frames > 1 and delta != 0:
+            z_expr = f"{zs}+{delta:.4f}*on/{total_frames}"
+        else:
+            z_expr = str(zs)
+
+    # ── Build pan + shake expressions ────────────────────────────
+    sx = effect.get("shake_x", 0)
+    sy = effect.get("shake_y", 0)
+    sf = effect.get("shake_freq", 0.7)
+
+    # Center the zoom (keep subject centered)
+    if sx > 0:
+        x_expr = f"iw/2-(iw/zoom/2)+{sx}*sin(on*{sf})"
+        y_expr = f"ih/2-(ih/zoom/2)+{sy}*cos(on*{sf + 0.2:.1f})"
+    else:
+        x_expr = "iw/2-(iw/zoom/2)"
+        y_expr = "ih/2-(ih/zoom/2)"
+
+    # ── Assemble zoompan filter ──────────────────────────────────
+    filters = (
+        f"zoompan=z='{z_expr}'"
+        f":x='{x_expr}':y='{y_expr}'"
+        f":d={total_frames}:s={VIDEO_WIDTH}x{VIDEO_HEIGHT}:fps={VIDEO_FPS}"
+    )
+
+    # ── White flash at start (dramatic sections) ─────────────────
+    if effect.get("flash_in"):
+        filters += ",fade=t=in:st=0:d=0.12:color=white"
+
+    # ── Animated subtitle ────────────────────────────────────────
+    if key_phrase and key_phrase.strip():
+        safe_text = (
+            key_phrase
+            .replace("\\", "\\\\")
+            .replace("'", "'\\''")
+            .replace(":", "\\:")
+            .replace("%", "%%")
+        )
+        sub_color = effect.get("sub_color", "white")
+        sub_size = effect.get("sub_size", 44)
+        sub_fade = effect.get("sub_fade", 0.3)
+        # Fade-in alpha: min(1, t/fade_time) — no commas needed
+        alpha_expr = f"min(1\\,t/{sub_fade})"
+
+        filters += (
+            f",drawtext=text='{safe_text}'"
+            f":fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf"
+            f":fontsize={sub_size}:fontcolor={sub_color}"
+            f":borderw=4:bordercolor=black@0.9"
+            f":box=1:boxcolor=black@0.4:boxborderw=12"
+            f":x=(w-tw)/2:y=h-120"
+            f":alpha='{alpha_expr}'"
+        )
+
+    cmd = [
+        "ffmpeg", "-y",
+        "-i", str(image_path),
+        "-vf", filters,
+        "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
+        "-pix_fmt", "yuv420p", "-an",
+        str(clip_path)
+    ]
+
+    result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
+    if result.returncode != 0:
+        # Fallback: if zoompan fails, try simple static clip
+        print(f"    ⚠️  Zoompan failed, falling back to static: {result.stderr[-200:]}")
+        return _make_static_clip(image_path, duration, key_phrase, clip_path)
+    return clip_path
+
+
+def _make_static_clip(image_path: Path, duration: float, key_phrase: str,
+                      clip_path: Path) -> Path:
+    """Fallback: simple static image clip if zoompan fails."""
     filters = (
         f"scale={VIDEO_WIDTH}:{VIDEO_HEIGHT}:force_original_aspect_ratio=decrease,"
         f"pad={VIDEO_WIDTH}:{VIDEO_HEIGHT}:(ow-iw)/2:(oh-ih)/2"
     )
-
     if key_phrase and key_phrase.strip():
         safe_text = (
             key_phrase
@@ -48,7 +211,6 @@ def _make_image_clip(image_path: Path, duration: float, key_phrase: str,
             f":borderw=3:bordercolor=black@0.8"
             f":x=(w-tw)/2:y=h-100"
         )
-
     cmd = [
         "ffmpeg", "-y",
         "-loop", "1", "-i", str(image_path),
@@ -59,7 +221,6 @@ def _make_image_clip(image_path: Path, duration: float, key_phrase: str,
         "-pix_fmt", "yuv420p", "-an",
         str(clip_path)
     ]
-
     result = subprocess.run(cmd, capture_output=True, text=True, timeout=120)
     if result.returncode != 0:
         raise RuntimeError(f"FFmpeg failed for {clip_path.name}: {result.stderr[-300:]}")
@@ -311,7 +472,9 @@ def build_video(script: dict, image_paths: list[Path],
                 break
             clip = clips_dir / f"clip_{sec_idx:02d}_{img_idx:03d}.mp4"
             if not clip.exists():
-                _make_image_clip(image_paths[gi], durations[img_idx], pd.get("key_phrase", ""), clip)
+                _make_image_clip(image_paths[gi], durations[img_idx],
+                                 pd.get("key_phrase", ""), clip,
+                                 section_id=audio_seg["section_id"])
             clip_paths.append(clip)
 
         # Hard-cut concat
