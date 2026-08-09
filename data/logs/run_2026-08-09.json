@@ -1,0 +1,34 @@
+{
+  "started_at": "2026-08-09T04:47:31.726988",
+  "steps": {
+    "script": {
+      "title": "Why the Number 4 Is AVOIDED Everywhere in Asia",
+      "source": "claude",
+      "sections": 12
+    },
+    "audio": {
+      "segments": 12,
+      "total_seconds": 60.4
+    },
+    "image_prompts": 24,
+    "images": 24,
+    "audio_production": {
+      "sfx": [
+        "whoosh",
+        "dramatic_hit",
+        "ding"
+      ],
+      "music_duration": 70.4
+    },
+    "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4",
+    "youtube_package": {
+      "hashtags": 15,
+      "chapters": 5,
+      "reel_cuts": 0
+    }
+  },
+  "status": "success",
+  "skipped_scripts": [],
+  "completed_at": "2026-08-09T04:50:18.818151",
+  "total_duration_seconds": 60.4
+}
