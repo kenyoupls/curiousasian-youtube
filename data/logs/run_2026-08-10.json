@@ -1,0 +1,34 @@
+{
+  "started_at": "2026-08-10T05:11:44.779267",
+  "steps": {
+    "script": {
+      "title": "Why Asian Parents REALLY Want You to Be a Doctor",
+      "source": "claude",
+      "sections": 12
+    },
+    "audio": {
+      "segments": 12,
+      "total_seconds": 57.6
+    },
+    "image_prompts": 20,
+    "images": 20,
+    "audio_production": {
+      "sfx": [
+        "whoosh",
+        "dramatic_hit",
+        "ding"
+      ],
+      "music_duration": 67.6
+    },
+    "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4",
+    "youtube_package": {
+      "hashtags": 15,
+      "chapters": 5,
+      "reel_cuts": 0
+    }
+  },
+  "status": "success",
+  "skipped_scripts": [],
+  "completed_at": "2026-08-10T05:13:52.567450",
+  "total_duration_seconds": 57.6
+}
