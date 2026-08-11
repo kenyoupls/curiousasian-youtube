@@ -1,0 +1,34 @@
+{
+  "started_at": "2026-08-11T04:51:32.938168",
+  "steps": {
+    "script": {
+      "title": "Why Japanese People BOW Instead of Shaking Hands",
+      "source": "claude",
+      "sections": 12
+    },
+    "audio": {
+      "segments": 12,
+      "total_seconds": 51.1
+    },
+    "image_prompts": 18,
+    "images": 18,
+    "audio_production": {
+      "sfx": [
+        "whoosh",
+        "dramatic_hit",
+        "ding"
+      ],
+      "music_duration": 61.1
+    },
+    "video": "/home/runner/work/curiousasian-youtube/curiousasian-youtube/output/final_video.mp4",
+    "youtube_package": {
+      "hashtags": 15,
+      "chapters": 5,
+      "reel_cuts": 0
+    }
+  },
+  "status": "success",
+  "skipped_scripts": [],
+  "completed_at": "2026-08-11T04:53:42.560612",
+  "total_duration_seconds": 51.1
+}
