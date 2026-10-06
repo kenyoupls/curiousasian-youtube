@@ -1,0 +1,35 @@
+{
+  "started_at": "2026-10-06T05:08:38.720391",
+  "steps": {
+    "script": {
+      "title": "Why Asian Grandmas ALWAYS Tell You to Eat More",
+      "source": "claude",
+      "sections": 12
+    },
+    "audio": {
+      "segments": 12,
+      "total_seconds": 61.6
+    },
+    "image_prompts": 23
+  },
+  "status": "failed",
+  "skipped_scripts": [
+    {
+      "title": "Why Asian Grandmas ALWAYS Tell You to Eat More",
+      "reason": "All image engines failed: Cloudflare FLUX 400: AiError: Bad input: Error: Additional or unevaluated properties '/width, /height, /num_steps, /seed' at '/' not allowed (c281de53-d4f9-4432-be1e-2cac4fa339aa)",
+      "attempt": 1
+    },
+    {
+      "title": "Why Asian Grandmas ALWAYS Tell You to Eat More",
+      "reason": "All image engines failed: Cloudflare FLUX 400: AiError: Bad input: Error: Additional or unevaluated properties '/width, /height, /num_steps, /seed' at '/' not allowed (f0be4e51-4c1c-414a-b3ba-b301054ae23d)",
+      "attempt": 2
+    },
+    {
+      "title": "Why Asian Grandmas ALWAYS Tell You to Eat More",
+      "reason": "All image engines failed: Cloudflare FLUX 400: AiError: Bad input: Error: Additional or unevaluated properties '/width, /height, /num_steps, /seed' at '/' not allowed (7bd7f059-c9f6-4126-9567-838738787e24)",
+      "attempt": 3
+    }
+  ],
+  "error": "All 3 scripts failed image generation. Skipped: ['Why Asian Grandmas ALWAYS Tell You to Eat More', 'Why Asian Grandmas ALWAYS Tell You to Eat More', 'Why Asian Grandmas ALWAYS Tell You to Eat More']",
+  "traceback": "Traceback (most recent call last):\n  File \"/home/runner/work/curiousasian-youtube/curiousasian-youtube/src/pipeline.py\", line 183, in run_pipeline\n    raise RuntimeError(\nRuntimeError: All 3 scripts failed image generation. Skipped: ['Why Asian Grandmas ALWAYS Tell You to Eat More', 'Why Asian Grandmas ALWAYS Tell You to Eat More', 'Why Asian Grandmas ALWAYS Tell You to Eat More']\n"
+}
