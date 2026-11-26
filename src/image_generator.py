@@ -7,7 +7,7 @@ All images use a locked style template + locked character for channel-wide consi
 import re
 import base64
 from pathlib import Path
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 from src.config import VIDEO_WIDTH, VIDEO_HEIGHT, OUTPUT_DIR
 
 
@@ -177,76 +177,107 @@ def _fit_to_hd(img: Image.Image) -> Image.Image:
     return img
 
 
+class ImageEngineConfigError(Exception):
+    """No image engine can work (bad/expired token, missing secrets).
+
+    Retrying other images or other scripts is pointless — stop the run.
+    """
+
+
+def _is_nsfw(err_str):
+    err_str = err_str.lower()
+    return "nsfw" in err_str or ("content" in err_str and "prohibited" in err_str)
+
+
+def _engines():
+    """Image engines in priority order: (name, callable(prompt, path, seed))."""
+    from src import cloudflare_helper as cf
+    from src import pollinations_helper as pol
+
+    engines = []
+    if cf.is_configured():
+        engines.append(("Cloudflare FLUX", lambda p, o, s: cf.generate_cloudflare_image(
+            p, o, num_steps=4, use_flux=True)))
+        engines.append(("Cloudflare SDXL", lambda p, o, s: cf.generate_cloudflare_image(
+            p, o, width=576, height=1024, seed=s, num_steps=8, use_flux=False)))
+    if pol.is_configured():
+        engines.append(("Pollinations", lambda p, o, s: pol.generate_pollinations_image(
+            p, o, width=576, height=1024, seed=s)))
+    if not engines:
+        raise ImageEngineConfigError(
+            "No image engine configured: set CLOUDFLARE_ACCOUNT_ID + CLOUDFLARE_API_TOKEN "
+            "(or POLLINATIONS_API_KEY) in GitHub secrets")
+    return engines
+
+
 def _generate_cloudflare(prompt, output_path, image_index=0):
-    """Generate via Cloudflare FLUX Schnell (primary). Returns True on success."""
-    from src.cloudflare_helper import generate_cloudflare_image
+    """Generate one image with the first engine that works, then crop to 1080x1920.
+
+    (Name kept for the thumbnail code.) Raises:
+    - ImageEngineConfigError if every engine failed on auth/config,
+    - RuntimeError with "NSFW" in it if the prompt was blocked,
+    - RuntimeError otherwise.
+    """
+    from src.cloudflare_helper import CloudflareAuthError
     seed = SEED_BASE + image_index
-    generate_cloudflare_image(
-        prompt, output_path,
-        width=576, height=1024,
-        seed=seed,
-        num_steps=4,
-        use_flux=True,
-    )
-    img = Image.open(output_path).convert("RGB")
-    img = _fit_to_hd(img)
-    img.save(output_path, "PNG")
-    return True
+    errors, auth_failures = [], 0
+    engines = _engines()
+
+    for name, engine in engines:
+        try:
+            engine(prompt, output_path, seed)
+            img = Image.open(output_path).convert("RGB")
+            img = _fit_to_hd(img)
+            img.save(output_path, "PNG")
+            return True
+        except CloudflareAuthError as e:
+            auth_failures += 1
+            errors.append(f"{name}: {e}")
+        except Exception as e:
+            if _is_nsfw(str(e)):
+                raise RuntimeError(f"NSFW blocked ({name}): {e}")
+            errors.append(f"{name}: {e}")
+            print(f"    ⚠️  {name} failed: {e}")
+
+    if auth_failures == len(engines) or (auth_failures and all(
+            "Cloudflare" in n for n, _ in engines)):
+        raise ImageEngineConfigError("; ".join(errors))
+    raise RuntimeError("; ".join(errors))
 
 
 def generate_single_image(prompt, output_path, image_index=0):
-    """Generate image: Cloudflare FLUX primary.
+    """Generate one image.
 
     Flow:
-    1. Sanitize + try Cloudflare FLUX (2 attempts)
-    2. If NSFW blocked → Gemini rewrites prompt → retry Cloudflare (2 attempts)
-    3. If still blocked → use generic safe prompt as last resort
+    1. Original prompt through the engine chain (FLUX → SDXL → Pollinations), 2 tries
+    2. If NSFW blocked → Gemini rewrites prompt → engine chain again
+    3. If still failing → generic safe prompt as last resort
+    Auth/config errors stop immediately (ImageEngineConfigError).
     """
-
-    flux_prompt = _build_prompt(prompt)
-
-    # ── Attempt 1-2: Cloudflare with original prompt ──────────
-    for attempt in range(2):
+    attempts = [
+        ("original", lambda: _build_prompt(prompt)),
+        ("original retry", lambda: _build_prompt(prompt)),
+        ("rewritten", lambda: _build_prompt(_rewrite_prompt_safe(prompt))),
+        ("safe fallback", lambda: _build_prompt(
+            f"{LOCKED_CHARACTER} standing in center with question mark floating above head, "
+            "simple colorful background with decorative elements")),
+    ]
+    last_err = None
+    nsfw = False
+    for label, make_prompt in attempts:
+        if label == "original retry" and nsfw:
+            continue  # same prompt would be blocked again
         try:
-            print(f"    ⚡ Cloudflare FLUX [{attempt+1}/2]...")
-            _generate_cloudflare(flux_prompt, output_path, image_index)
+            _generate_cloudflare(make_prompt(), output_path, image_index)
             return output_path
+        except ImageEngineConfigError:
+            raise
         except Exception as e:
-            err_str = str(e).lower()
-            if "nsfw" in err_str or ("content" in err_str and "prohibited" in err_str):
-                print(f"    ⚠️  NSFW blocked — rewriting prompt...")
-                break
-            print(f"    ⚠️  Cloudflare error: {e}")
-            if attempt == 1:
-                break
+            last_err = e
+            nsfw = nsfw or _is_nsfw(str(e))
+            print(f"    ⚠️  Image ({label}) failed: {e}")
 
-    # ── Attempt 3-4: Gemini-rewritten safe prompt ──────────────
-    safe_scene = _rewrite_prompt_safe(prompt)
-    safe_prompt = _build_prompt(safe_scene)
-
-    for attempt in range(2):
-        try:
-            print(f"    ⚡ Cloudflare FLUX rewritten [{attempt+1}/2]...")
-            _generate_cloudflare(safe_prompt, output_path, image_index)
-            return output_path
-        except Exception as e:
-            err_str = str(e).lower()
-            if "nsfw" in err_str or ("content" in err_str and "prohibited" in err_str):
-                print(f"    ⚠️  Still NSFW after rewrite...")
-                break
-            print(f"    ⚠️  Cloudflare error: {e}")
-
-    # ── Attempt 5: generic safe prompt (guaranteed to work) ─────
-    fallback_prompt = _build_prompt(
-        f"{LOCKED_CHARACTER} standing in center with question mark floating above head, "
-        "simple colorful background with decorative elements"
-    )
-    try:
-        print(f"    ⚡ Cloudflare safe fallback...")
-        _generate_cloudflare(fallback_prompt, output_path, image_index)
-        return output_path
-    except Exception as e:
-        raise ImageGenerationFailed(f"All image engines failed: {e}")
+    raise ImageGenerationFailed(f"All image engines failed: {last_err}")
 
 
 def generate_all_images(image_prompts):
@@ -299,7 +330,9 @@ def generate_thumbnail(script):
         img.save(thumb, "PNG")
 
     # Title overlay
-    img = Image.open(thumb).resize((1280, 720), Image.LANCZOS)
+    # Crop (not stretch) the 9:16 frame to a 16:9 thumbnail
+    img = ImageOps.fit(Image.open(thumb).convert("RGB"), (1280, 720), Image.LANCZOS,
+                       centering=(0.5, 0.35))
     draw = ImageDraw.Draw(img)
     try:
         font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 56)

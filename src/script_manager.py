@@ -49,13 +49,17 @@ def is_queue_low() -> bool:
     return get_queue_count() < SCRIPT_LOW_THRESHOLD
 
 
-def get_next_script() -> dict:
+def get_next_script(exclude_paths=()) -> dict:
     """Get the next script from queue, or generate one with Gemini.
+
+    exclude_paths: queue files already tried (and failed) in this run, so a
+    retry really moves on to a DIFFERENT script instead of repeating the same one.
 
     NOTE: Script stays in queue until mark_script_done() is called after
     successful pipeline completion. This prevents losing scripts on failure.
     """
-    scripts = sorted(SCRIPTS_QUEUE_DIR.glob("*.json"))
+    excluded = {str(p) for p in exclude_paths}
+    scripts = [p for p in sorted(SCRIPTS_QUEUE_DIR.glob("*.json")) if str(p) not in excluded]
 
     if scripts:
         script_path = scripts[0]

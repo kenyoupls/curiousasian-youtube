@@ -19,14 +19,41 @@ from src.config import OUTPUT_DIR, DATA_DIR
 from src.script_manager import get_next_script, mark_script_done, is_queue_low, get_queue_count
 from src.voice_generator import generate_all_audio
 from src.image_prompt_generator import generate_all_image_prompts
-from src.image_generator import generate_all_images, generate_thumbnail, ImageGenerationFailed
+from src.image_generator import (
+    generate_all_images, generate_thumbnail, ImageGenerationFailed, ImageEngineConfigError
+)
 from src.sfx_generator import generate_all_sfx, generate_background_music
 from src.video_builder import build_video
 from src.youtube_helper import generate_youtube_package
 from src.telegram_notifier import (
-    notify_pipeline_start, notify_scripts_low, notify_video_complete,
-    notify_pipeline_failed, notify_nsfw_warning
+    notify_video_complete, notify_pipeline_failed, notify_setup_problem
 )
+
+
+def preflight_check():
+    """Check the image engine BEFORE spending Gemini quota on voice + prompts.
+
+    A dead token used to burn ~3 minutes and every retry before failing.
+    Now it fails in seconds with a fix-it message.
+    """
+    from src import cloudflare_helper as cf
+    from src import pollinations_helper as pol
+    if cf.is_configured():
+        try:
+            cf.check_cloudflare()
+            print("✅ Preflight: Cloudflare token OK")
+            return
+        except cf.CloudflareAuthError as e:
+            if not pol.is_configured():
+                raise ImageEngineConfigError(str(e))
+            print(f"⚠️  Preflight: Cloudflare unusable ({e}) — continuing with Pollinations")
+            return
+        except Exception as e:
+            print(f"⚠️  Preflight: Cloudflare check inconclusive ({e}) — continuing")
+            return
+    if not pol.is_configured():
+        raise ImageEngineConfigError(
+            "No image engine configured: CLOUDFLARE_ACCOUNT_ID / CLOUDFLARE_API_TOKEN secrets are empty")
 
 MAX_SCRIPT_RETRIES = 3  # Try up to 3 different scripts before giving up
 
@@ -145,17 +172,17 @@ def run_pipeline():
         print("🚀 CuriousAsian Pipeline — Starting")
         print("=" * 60)
 
-        # ── Startup ping to Telegram ───────────────────────────────
-        notify_pipeline_start()
-
-        # ── Check script queue health ──────────────────────────────
+        # (No more daily "Starting" ping or separate "queue low" ping —
+        #  you now get ONE message per day: the video, or what went wrong.)
         if is_queue_low():
-            remaining = get_queue_count()
-            print(f"⚠️  Script queue low: {remaining} remaining")
-            notify_scripts_low(remaining)
+            print(f"⚠️  Script queue low: {get_queue_count()} remaining")
+
+        # ── Preflight: is the image engine usable? (fails fast) ────
+        preflight_check()
 
         # ── Try scripts until one succeeds ─────────────────────────
         result = None
+        tried_paths = []
 
         for attempt in range(MAX_SCRIPT_RETRIES):
             # Clean output for each attempt
@@ -163,7 +190,9 @@ def run_pipeline():
 
             # ── Step 1: Get script ─────────────────────────────────
             print(f"\n📝 STEP 1: Getting script (attempt {attempt + 1}/{MAX_SCRIPT_RETRIES})...")
-            script = get_next_script()
+            script = get_next_script(exclude_paths=tried_paths)
+            if script.get("_queue_path"):
+                tried_paths.append(script["_queue_path"])
 
             try:
                 result = _build_video_from_script(script, run_log)
@@ -216,6 +245,14 @@ def run_pipeline():
             queue_remaining=remaining,
             youtube_package=result.get("youtube_package"),
         )
+
+    except ImageEngineConfigError as e:
+        # Setup problem (expired/missing token) — retrying can't fix it.
+        run_log["status"] = "failed"
+        run_log["error"] = f"Setup problem: {e}"
+        print(f"\n❌ SETUP PROBLEM: {e}")
+        notify_setup_problem(str(e))
+        raise
 
     except Exception as e:
         run_log["status"] = "failed"

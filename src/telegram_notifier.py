@@ -31,11 +31,14 @@ def send_message(text: str, parse_mode: str = "Markdown") -> bool:
     if not _is_configured():
         return False
     try:
-        resp = requests.post(_api_url("sendMessage"), json={
-            "chat_id": TELEGRAM_CHAT_ID,
-            "text": text,
-            "parse_mode": parse_mode,
-        }, timeout=15)
+        payload = {"chat_id": TELEGRAM_CHAT_ID, "text": text}
+        if parse_mode:
+            payload["parse_mode"] = parse_mode
+        resp = requests.post(_api_url("sendMessage"), json=payload, timeout=15)
+        if resp.status_code == 400 and parse_mode:
+            # Markdown parse error (e.g. stray "_" in an error text) — resend as plain text
+            payload.pop("parse_mode", None)
+            resp = requests.post(_api_url("sendMessage"), json=payload, timeout=15)
         if resp.status_code == 200:
             print("  📨 Telegram message sent")
             return True
@@ -201,6 +204,9 @@ def notify_video_complete(title: str, duration: float, source: str,
         alerts.append(f"⚠️ {nsfw_blocks} images hit NSFW filter (rewrites used)")
     if queue_remaining is not None:
         alerts.append(f"📝 Scripts remaining: {queue_remaining}")
+        if queue_remaining < 7:
+            alerts.append("✍️ Queue is low: ask Claude for a new batch of scripts "
+                          "(Gemini writes backups if it runs out).")
 
     if alerts:
         send_message("\n".join(alerts))
@@ -222,6 +228,21 @@ def notify_pipeline_failed(error: str):
         f"❌ *Pipeline Failed*\n\n"
         f"```\n{error[:500]}\n```\n\n"
         f"Check GitHub Actions for full logs."
+    )
+
+
+def notify_setup_problem(error: str):
+    """Pipeline can't run until the user fixes a key/token — say exactly what to do."""
+    send_message(
+        "🔑 CuriousAsian: setup problem, no video today\n\n"
+        f"{error[:300]}\n\n"
+        "Fix (2 min):\n"
+        "1. dash.cloudflare.com → My Profile → API Tokens → Create Token → "
+        "template 'Workers AI' → Create\n"
+        "2. GitHub repo → Settings → Secrets and variables → Actions → "
+        "edit CLOUDFLARE_API_TOKEN → paste the new token\n"
+        "3. Actions tab → Daily Video Pipeline → Run workflow",
+        parse_mode=None,
     )
 
 

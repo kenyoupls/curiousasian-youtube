@@ -1,79 +1,59 @@
-"""Pollinations.ai — Free FLUX image generation (no API key needed).
+"""Pollinations.ai — optional backup image engine.
 
-Endpoint: GET https://image.pollinations.ai/prompt/{prompt}
-Returns image bytes directly. FLUX model is free and unlimited.
-Rate limit: ~1 request per 16 seconds (anonymous).
+Since late 2026 Pollinations needs an API key (anonymous image.pollinations.ai returns 503,
+gen.pollinations.ai returns 401 without a key). A key from https://enter.pollinations.ai
+can be stored as the POLLINATIONS_API_KEY GitHub secret; without it this engine is skipped.
 """
 
+import os
 import time
 import urllib.parse
 import requests
 from pathlib import Path
 
+POLLINATIONS_API_KEY = os.environ.get("POLLINATIONS_API_KEY", "").strip()
+
 _last_request = 0.0
-RATE_LIMIT_SECONDS = 16  # anonymous rate limit
+RATE_LIMIT_SECONDS = 5
 
 
-def generate_pollinations_image(prompt, output_path, width=1024, height=576,
+def is_configured():
+    return bool(POLLINATIONS_API_KEY)
+
+
+def generate_pollinations_image(prompt, output_path, width=576, height=1024,
                                  seed=None, model="flux"):
-    """Generate image via Pollinations FLUX (free, no API key).
-
-    3 attempts with rate limiting. Returns output_path on success.
-    """
+    """Generate image via Pollinations (needs POLLINATIONS_API_KEY). 2 attempts."""
     global _last_request
+    if not is_configured():
+        raise RuntimeError("Pollinations skipped: POLLINATIONS_API_KEY not set")
 
-    # URL-encode prompt (max 500 chars to stay safe)
     encoded = urllib.parse.quote(prompt[:500], safe="")
-
-    # Build query params
-    params = {
-        "model": model,
-        "width": width,
-        "height": height,
-        "nologo": "true",
-    }
+    params = {"model": model, "width": width, "height": height, "nologo": "true"}
     if seed is not None:
         params["seed"] = seed
+    url = f"https://gen.pollinations.ai/image/{encoded}?{urllib.parse.urlencode(params)}"
+    headers = {"Authorization": f"Bearer {POLLINATIONS_API_KEY}"}
 
-    query = urllib.parse.urlencode(params)
-    url = f"https://image.pollinations.ai/prompt/{encoded}?{query}"
-
-    for attempt in range(3):
+    last_err = None
+    for attempt in range(2):
+        wait = RATE_LIMIT_SECONDS - (time.time() - _last_request)
+        if wait > 0:
+            time.sleep(wait)
+        _last_request = time.time()
+        print(f"    🌸 Pollinations {model} [{attempt+1}/2] (seed={seed})...")
         try:
-            # Rate limit: 16s between requests
-            wait = RATE_LIMIT_SECONDS - (time.time() - _last_request)
-            if wait > 0:
-                print(f"    ⏳ Rate limit: waiting {wait:.0f}s...")
-                time.sleep(wait)
-
-            _last_request = time.time()
-            print(f"    🌸 Pollinations FLUX [{attempt+1}/3] (seed={seed})...")
-
-            resp = requests.get(url, timeout=(15, 180))
+            resp = requests.get(url, headers=headers, timeout=(15, 180))
+            if resp.status_code in (401, 402, 403):
+                raise RuntimeError(f"Pollinations {resp.status_code}: key invalid or out of credit")
             resp.raise_for_status()
-
-            content_type = resp.headers.get("content-type", "")
-            if "image" not in content_type:
-                print(f"    ⚠️  Not an image response: {content_type}")
-                if attempt < 2:
-                    time.sleep(5)
-                continue
-
+            if "image" not in resp.headers.get("content-type", "") or len(resp.content) < 1000:
+                raise RuntimeError("Pollinations returned a non-image response")
             output_path = Path(output_path)
             output_path.write_bytes(resp.content)
-
-            if output_path.stat().st_size > 1000:
-                return output_path
-            else:
-                print(f"    ⚠️  Image too small ({output_path.stat().st_size} bytes)")
-
-        except requests.exceptions.HTTPError as e:
-            status = e.response.status_code if e.response else "?"
-            print(f"    ⚠️  Attempt {attempt+1}: HTTP {status}")
+            return output_path
         except Exception as e:
-            print(f"    ⚠️  Attempt {attempt+1}: {e}")
+            last_err = e
+            print(f"    ⚠️  Pollinations attempt {attempt+1}: {e}")
 
-        if attempt < 2:
-            time.sleep(5)
-
-    raise Exception("Pollinations FLUX failed after 3 attempts")
+    raise RuntimeError(f"Pollinations failed: {last_err}")
